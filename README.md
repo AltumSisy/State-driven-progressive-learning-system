@@ -2,10 +2,11 @@
 
 ## 状态驱动的渐进式学习教练 Skill
 
-一个通用的 AI 学习教练 Skill，实现三种渐进式学习方法：
+一个通用的 AI 学习教练 Skill，实现四种渐进式学习方法：
 1. **心智模型建构** - 建立专家级思维框架
 2. **结构化流程管理** - SQ3R + 项目式学习 + KISS 复盘
 3. **对抗性压力测试** - 苏格拉底诘问 + 反事实情境 + 漏洞注入
+4. **FastLearn 快速学习** - 20分钟极速掌握，L2层级概念提取
 
 **核心理念**：教学方法（Skill）与课程内容（项目资源）完全分离，本 Skill 可复用于任何学习项目。
 
@@ -20,6 +21,7 @@ graph TB
         A --> M1[方法1: 心智模型建构]
         A --> M2[方法2: 结构化流程]
         A --> M3[方法3: 对抗测试]
+        A --> M4[方法4: FastLearn]
     end
 
     subgraph "项目层（用户内容）"
@@ -36,6 +38,7 @@ graph TB
     style M1 fill:#50c878,color:#fff
     style M2 fill:#50c878,color:#fff
     style M3 fill:#50c878,color:#fff
+    style M4 fill:#ff6b6b,color:#fff
 ```
 
 ---
@@ -112,10 +115,13 @@ State-driven-progressive-learning-system/    # Skill 项目
 ├── skills/                            # ⭐ Skill 文件（核心）
 │   └── progressive-learning-coach/   # 唯一的 Skill
 │       ├── SKILL.md                  # 核心协议
-│       └── references/               # 方法1/2/3详细指南
+│       └── references/               # 方法1/2/3/4详细指南
 │           ├── method1-mental-model.md
 │           ├── method2-structured.md
 │           ├── method3-adversarial.md
+│           ├── method4-fastLearn.md
+│           ├── fastlearn-context-organization.md
+│           ├── fastlearn-flowchart-generator.md
 │           ├── coach-instructions.md
 │           ├── state-machine.md      # 状态机规则
 │           ├── todo-disclosure.md    # TODO 披露机制
@@ -281,7 +287,8 @@ pie title 学习方法时间分配
 |-----|------|------|
 | **方法1** | 心智模型建构（专家共识+分歧+深度测试） | ~20% |
 | **方法2** | 结构化学习（SQ3R + 项目式 + KISS） | ~50% |
-| **方法3** | 对抗测试（苏格拉底+反事实+漏洞注入） | ~30% |
+| **方法3** | 对抗测试（苏格拉底+反事实+漏洞注入） | ~25% |
+| **方法4** | FastLearn（20分钟极速学习，L2层级掌握） | ~5% |
 
 ### 三种方法详解
 
@@ -306,6 +313,13 @@ graph LR
         M3B[反事实情境]
         M3C[漏洞注入]
         M3A --> M3B --> M3C
+    end
+
+    subgraph 方法4: FastLearn
+        M4A[20分钟极速学习]
+        M4B[L2层级掌握]
+        M4C[核心概念提取]
+        M4A --> M4B --> M4C
     end
 ```
 
@@ -516,6 +530,7 @@ learning_config:
 | 方法1 Prompt | ✅ 完成 |
 | 方法2 Prompt | ✅ 完成 |
 | 方法3 Prompt | ✅ 完成 |
+| 方法4 FastLearn | ✅ 完成 |
 | 课程过渡流程 | ✅ 完成 |
 | 心智模型评估 | ✅ 完成 |
 | 示例项目 L0-L2 | ✅ 完成 |
@@ -553,6 +568,71 @@ learning_config:
 - `mermaid-visualizer` - 生成学习流程图
 - `excalidraw-diagram` - 绘制知识架构图
 - `obsidian-canvas-creator` - 创建思维导图
+
+---
+
+## 版本信息
+
+**当前版本**：v1.2.0
+
+**版本历史**：
+
+| 版本 | 日期 | 更新内容 |
+|------|------|----------|
+| v1.2.0 | 2026-05-22 | 新增 FastLearn（Method 4）快速学习法；添加流程图自动生成；优化上下文组织规范 |
+| v1.1.0 | 2026-05-15 | 新增课程过渡流程；添加资源智能匹配；优化心智模型评估 |
+| v1.0.0 | 2026-05-01 | 初始版本；实现三种核心学习方法（心智模型、结构化流程、对抗测试） |
+
+---
+
+## Releases
+
+### v1.2.0 (Latest)
+
+**发布日期**：2026-05-22
+
+**新增功能**：
+- ✅ **FastLearn 快速学习法**（Method 4）
+  - 20分钟极速学习流程
+  - L2层级理解目标
+  - 核心概念自动提取（≤5个）
+  - 四种学习方案（AI推荐/全量/自选/混合）
+- ✅ **上下文自动生成**
+  - `L-{KEYWORD}/` 目录结构
+  - README.md 概念总览
+  - REVIEW.md 复习要点
+- ✅ **流程图自动生成**
+  - Mermaid 流程图智能生成
+  - 颜色编码语义（蓝/绿/红/灰）
+  - 知识结构可视化
+
+**文档更新**：
+- 添加 method4-fastLearn.md 完整文档
+- 添加 fastlearn-context-organization.md 规范
+- 添加 fastlearn-flowchart-generator.md 指南
+- 更新 README 集成 FastLearn 说明
+
+**下载**：
+- [Source Code (zip)](https://github.com/username/State-driven-progressive-learning-system/archive/v1.2.0.zip)
+- [Source Code (tar.gz)](https://github.com/username/State-driven-progressive-learning-system/archive/v1.2.0.tar.gz)
+
+### v1.1.0
+
+**发布日期**：2026-05-15
+
+**新增功能**：
+- 课程过渡流程（结束总结 → 快速复习 → 启动引导）
+- 用户资源智能匹配系统
+- 心智模型层级评估（L0-L4）
+
+### v1.0.0
+
+**发布日期**：2026-05-01
+
+**初始版本**：
+- 三种渐进式学习方法（Method 1/2/3）
+- 状态驱动的学习流程管理
+- 示例项目（Agent Architecture, Claude Harness）
 
 ---
 
