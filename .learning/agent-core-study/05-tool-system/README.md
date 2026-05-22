@@ -1,360 +1,384 @@
-# 05 - 工具系统
+# L05: 工具执行完整流程
 
-## 概述
+---
 
-工具系统允许 Agent 调用外部功能。工具定义使用 TypeBox 进行参数验证。
+## 1. 心智模型构建
 
-## 工具定义
+### 1.1 背景
+
+#### 工具执行的历史演进
+
+```
+早期工具执行:
+├─ 单工具: 简单调用
+├─ 顺序执行: 一个完成后下一个
+├─ 错误处理: 简单 try-catch
+└─ 无并发概念
+
+中期需求:
+├─ 多工具并发执行 → 提高效率
+├─ 参数验证 → TypeBox schema
+├─ 执行前后钩子 → 权限检查、审计
+├─ 流式进度 → 长时间任务反馈
+└─ 终止提示 → 控制流程
+
+→ agent-core 提供完整工具执行框架
+```
+
+---
+
+### 1.2 目标
+
+#### 核心痛点
+
+| 痛点 | 手动实现 | agent-core 解决 |
+|------|---------|----------------|
+| 参数验证 | 手动检查 | TypeBox + validateToolArguments |
+| 并发执行 | 手动 Promise.all + 顺序管理 | parallel 模式自动处理 |
+| 执行钩子 | 手动插入 | beforeToolCall / afterToolCall |
+| 进度反馈 | 无标准机制 | onUpdate 回调 + tool_execution_update |
+| 终止控制 | 手动判断 | terminate 批级别机制 |
+
+---
+
+### 1.3 专家视角 - 概念网络
+
+```
+工具执行概念网络:
+
+定义层:
+├─ Tool (pi-ai)
+│   ├─ name: string
+│   ├─ description: string
+│   └─ parameters: TSchema
+│
+├─ AgentTool (扩展)
+│   ├─ label: string ← UI 标签
+│   ├─ prepareArguments?: shim
+│   ├─ execute: (id, params, signal, onUpdate)
+│   └─ executionMode?: override
+
+执行层:
+├─ prepareToolCall
+│   ├─ find tool
+│   ├─ prepareArguments
+│   ├─ validateToolArguments
+│   ├─ beforeToolCall
+│   └─ return: PreparedToolCall | Immediate
+│
+├─ executePreparedToolCall
+│   ├─ tool.execute()
+│   ├─ onUpdate → emit tool_execution_update
+│   └─ return: ExecutedToolCallOutcome
+│
+├─ finalizeExecutedToolCall
+│   ├─ afterToolCall
+│   ├─ merge result
+│   └─ return: FinalizedToolCallOutcome
+
+结果层:
+├─ AgentToolResult
+│   ├─ content: TextContent | ImageContent[]
+│   ├─ details: T
+│   └─ terminate?: boolean
+│
+├─ ToolResultMessage
+│   ├─ role: "toolResult"
+│   ├─ toolCallId
+│   ├─ toolName
+│   ├─ content
+│   └─ isError
+```
+
+---
+
+## 2. 结构化学习 (SQ3R)
+
+### 2.1 Survey - 执行流程概览
+
+```
+工具执行完整流程:
+
+┌─────────────────────────────────────────────────────────┐
+│                  TOOL EXECUTION FLOW                      │
+└─────────────────────────────────────────────────────────┘
+
+assistantMessage (包含 toolCalls[])
+       │
+       │ executeToolCalls()
+       │
+       ▼
+┌─────────────────────────────────────────────────────────┐
+│                  MODE SELECTION                           │
+│  hasSequentialToolCall?                                   │
+│      ├─ Yes → executeToolCallsSequential                 │
+│      └─ No  → executeToolCallsParallel                   │
+└─────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────┐
+│                  FOR EACH TOOL CALL                       │
+│                                                           │
+│  1. emit tool_execution_start                            │
+│  2. prepareToolCall                                       │
+│     ├─ find tool definition                              │
+│     ├─ prepareArguments                                  │
+│     ├─ validateToolArguments                             │
+│     ├─ beforeToolCall                                    │
+│     └─ block? → Immediate                                │
+│  3. executePreparedToolCall                              │
+│     ├─ tool.execute()                                    │
+│     └─ onUpdate → emit update                            │
+│  4. finalizeExecutedToolCall                             │
+│     ├─ afterToolCall                                     │
+│     └─ merge result                                      │
+│  5. emit tool_execution_end                              │
+│  6. emit message_start/end (toolResult)                  │
+└─────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────┐
+│                  TERMINATE CHECK                          │
+│  shouldTerminateToolBatch()                              │
+│  → 所有工具都 terminate?                                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 2.2 Question - 关键问题驱动
+
+**Q1**: prepareArguments 和 validateToolArguments 的区别是什么？
+**Q2**: beforeToolCall 和 afterToolCall 的触发时机和效果？
+**Q3**: parallel 执行的三阶段是什么？
+**Q4**: terminate 的触发条件和效果？
+
+### 2.3 Read - 源代码映射
+
+| 内容 | 源文件 | 行数 |
+|------|--------|------|
+| AgentTool 定义 | `types.ts` | L361-384 |
+| AgentToolResult | `types.ts` | L344-355 |
+| BeforeToolCallContext | `types.ts` | L84-93 |
+| AfterToolCallContext | `types.ts` | L96-109 |
+| BeforeToolCallResult | `types.ts` | L55-58 |
+| AfterToolCallResult | `types.ts` | L72-81 |
+| executeToolCalls | `agent-loop.ts` | L373-388 |
+| executeToolCallsSequential | `agent-loop.ts` | L395-449 |
+| executeToolCallsParallel | `agent-loop.ts` | L451-516 |
+| prepareToolCall | `agent-loop.ts` | L562-626 |
+| prepareToolCallArguments | `agent-loop.ts` | L548-560 |
+| executePreparedToolCall | `agent-loop.ts` | L628-663 |
+| finalizeExecutedToolCall | `agent-loop.ts` | L665-708 |
+| shouldTerminateToolBatch | `agent-loop.ts` | L544-546 |
+| createToolResultMessage | `agent-loop.ts` | L727-736 |
+
+### 2.4 Recite - 使用模板
+
+#### 工具定义模板
 
 ```typescript
 import { Type } from "typebox";
 
 const readFileTool: AgentTool = {
-  // 必需属性
-  name: "read_file",                           // 唯一标识符
-  label: "Read File",                          // UI 显示标签
-  description: "Read a file's contents",        // 功能描述
-  parameters: Type.Object({                     // 参数模式（TypeBox）
+  name: "read_file",
+  description: "Read a file's contents",
+  parameters: Type.Object({
     path: Type.String({ description: "File path" }),
   }),
   
-  // 可选属性
-  executionMode: "sequential",                   // 执行模式覆盖
-  prepareArguments: (args: unknown) => {        // 参数预处理
-    // 返回符合 parameters 模式的对象
-    return args as { path: string };
-  },
+  label: "Read File",
   
-  // 执行函数
-  execute: async (
-    toolCallId: string,                        // 工具调用 ID
-    params: Static<typeof parameters>,         // 验证后的参数
-    signal?: AbortSignal,                       // 中止信号
-    onUpdate?: AgentToolUpdateCallback        // 进度回调
-  ): Promise<AgentToolResult<Details>> => {
-    const content = await fs.readFile(params.path, "utf-8");
-    
-    // 可选: 流式进度
-    onUpdate?.({
-      content: [{ type: "text", text: "Reading..." }],
-      details: {}
-    });
-    
-    // 返回结果
-    return {
-      content: [{ type: "text", text: content }],  // 给 LLM 的内容
-      details: { path: params.path, size: content.length },  // 详情
-      terminate: false,  // 是否终止 Agent（可选）
-    };
-  },
-};
-```
-
-## 工具执行模式
-
-### Parallel（并行，默认）
-
-```
-Assistant Message (包含 3 个 tool calls)
-│
-├─ Tool A: preflight → execute ─┐
-├─ Tool B: preflight → execute ─┤  // 并发执行
-├─ Tool C: preflight → execute ─┘
-│
-│  // 工具按完成顺序触发事件
-├─ tool_execution_end (Tool B) ─┐
-├─ tool_execution_end (Tool A) ─┤  // 按完成顺序
-├─ tool_execution_end (Tool C) ─┘
-│
-│  // 但结果消息按助手原始顺序
-├─ message_start (Tool Result A)
-├─ message_end (Tool Result A)
-├─ message_start (Tool Result B)
-├─ message_end (Tool Result B)
-├─ message_start (Tool Result C)
-├─ message_end (Tool Result C)
-│
-└─ turn_end
-```
-
-### Sequential（顺序）
-
-```
-Assistant Message (包含 3 个 tool calls)
-│
-├─ Tool A: preflight → execute → tool_execution_end → message_start/end
-├─ Tool B: preflight → execute → tool_execution_end → message_start/end
-├─ Tool C: preflight → execute → tool_execution_end → message_start/end
-│
-└─ turn_end
-```
-
-### 配置方式
-
-```typescript
-// 全局配置（Agent 构造函数）
-const agent = new Agent({
-  toolExecution: "parallel",  // 或 "sequential"
-});
-
-// 每个工具覆盖
-const tool: AgentTool = {
-  name: "my_tool",
-  executionMode: "sequential",  // 此工具强制顺序执行
-  // ...
-};
-
-// 注意: 如果一个 batch 中有任何工具是 sequential，
-// 整个 batch 都会顺序执行
-```
-
-## 错误处理
-
-### 正确方式: 抛出错误
-
-```typescript
-execute: async (toolCallId, params, signal, onUpdate) => {
-  if (!fs.existsSync(params.path)) {
-    // 抛出错误，Agent 会捕获并报告给 LLM
-    throw new Error(`File not found: ${params.path}`);
-  }
+  prepareArguments: (args) => args as { path: string },
   
-  // 成功时才返回内容
-  return {
-    content: [{ type: "text", text: "..." }],
-    details: {}
-  };
-}
-```
-
-### 结果
-
-```typescript
-// Agent 会将错误转换为 tool result
-{
-  role: "toolResult",
-  toolCallId: "...",
-  content: [{ type: "text", text: "File not found: ..." }],
-  isError: true
-}
-```
-
-## 工具执行流程
-
-```
-┌─────────────────┐
-│  Tool Call 收到  │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  beforeToolCall │  // 预检，可阻止执行
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  validate args  │  // TypeBox 验证
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   execute()     │  // 执行工具
-└────────┬────────┘
-         │
-         ├─ tool_execution_start
-         ├─ tool_execution_update (可选)
-         └─ tool_execution_end
-         │
-         ▼
-┌─────────────────┐
-│  afterToolCall  │  // 后处理，可修改结果
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   toolResult    │  // 消息添加到上下文
-└─────────────────┘
-```
-
-## 终止 Agent
-
-工具可以提示 Agent 在工具 batch 完成后停止：
-
-```typescript
-execute: async (toolCallId, params, signal, onUpdate) => {
-  // ...
-  return {
-    content: [{ type: "text", text: "Task complete" }],
-    details: {},
-    terminate: true,  // 提示终止
-  };
-}
-```
-
-**终止条件**:
-- 只有当 batch 中 **所有** 已完成的工具结果都设置 `terminate: true` 时，Agent 才会停止
-- 也可以在 `afterToolCall` 中设置 `terminate: true`
-
-## 流式更新
-
-### onUpdate 回调
-
-```typescript
-execute: async (toolCallId, params, signal, onUpdate) => {
-  const stream = createSomeStream();
-  
-  for await (const chunk of stream) {
-    // 报告进度
-    onUpdate?.({
-      content: [{ type: "text", text: chunk }],
-      details: { progress: chunk.length }
-    });
-  }
-  
-  return {
-    content: [{ type: "text", text: finalResult }],
-    details: { totalSize: finalResult.length }
-  };
-}
-```
-
-### 事件流
-
-```
-tool_execution_start
-├─ tool_execution_update (partial 1)
-├─ tool_execution_update (partial 2)
-├─ tool_execution_update (partial 3)
-└─ tool_execution_end
-```
-
-## 工具钩子
-
-### beforeToolCall
-
-```typescript
-beforeToolCall: async ({ toolCall, args, context }, signal) => {
-  // 示例: 阻止特定工具
-  if (toolCall.name === "bash") {
-    return {
-      block: true,
-      reason: "bash tool is disabled for security"
-    };
-  }
-  
-  // 示例: 阻止危险参数
-  if (toolCall.name === "delete_file") {
-    const path = args.path;
-    if (path.includes("/system/")) {
-      return {
-        block: true,
-        reason: "Cannot delete system files"
-      };
-    }
-  }
-  
-  // 返回 undefined 表示允许执行
-}
-```
-
-### afterToolCall
-
-```typescript
-afterToolCall: async ({ toolCall, result, isError, context }, signal) => {
-  // 示例: 添加审计标记
-  if (!isError) {
-    return {
-      details: { ...result.details, audited: true, timestamp: Date.now() }
-    };
-  }
-  
-  // 示例: 修改内容
-  if (toolCall.name === "fetch") {
-    return {
-      content: [{ type: "text", text: sanitizeHtml(result.content[0].text) }]
-    };
-  }
-  
-  // 示例: 设置终止标志
-  if (toolCall.name === "notify_done") {
-    return { terminate: true };
-  }
-}
-```
-
-## 工具集合
-
-```typescript
-// 创建工具集
-const tools: AgentTool[] = [
-  readFileTool,
-  writeFileTool,
-  bashTool,
-  searchTool,
-];
-
-// 应用到 Agent
-agent.state.tools = tools;
-```
-
-## 完整示例
-
-```typescript
-import { Agent } from "@earendil-works/pi-agent-core";
-import { Type } from "typebox";
-
-// 定义计算器工具
-const calculatorTool: AgentTool = {
-  name: "calculator",
-  label: "Calculator",
-  description: "Perform mathematical calculations",
-  parameters: Type.Object({
-    expression: Type.String({ description: "Math expression to evaluate" }),
-  }),
   execute: async (toolCallId, params, signal, onUpdate) => {
-    // 模拟流式计算
-    onUpdate?.({
-      content: [{ type: "text", text: "Computing..." }],
-      details: {}
-    });
+    if (signal?.aborted) throw new Error("Aborted");
     
-    const result = eval(params.expression); // 注意: 实际使用需要安全评估
+    onUpdate?.({ content: [{ type: "text", text: "Reading..." }], details: {} });
     
+    const content = await fs.readFile(params.path);
     return {
-      content: [{ type: "text", text: String(result) }],
-      details: { expression: params.expression, result }
+      content: [{ type: "text", text: content }],
+      details: { path, size: content.length },
+      terminate: false,
     };
-  }
-};
-
-// 创建 Agent
-const agent = new Agent({
-  initialState: {
-    systemPrompt: "You are a helpful assistant with access to a calculator.",
-    model: getModel("anthropic", "claude-sonnet-4-20250514"),
-    tools: [calculatorTool],
   },
-  beforeToolCall: async ({ toolCall, args }) => {
-    // 安全检查
-    const expr = args.expression as string;
-    if (expr.includes("rm") || expr.includes("exec")) {
-      return { block: true, reason: "Unsafe expression" };
-    }
-  }
-});
-
-// 使用
-await agent.prompt("Calculate 2 + 2");
+  
+  executionMode: "sequential",
+};
 ```
 
-## 最佳实践
+#### 钩子使用模板
 
-1. **抛出错误而非返回错误内容** - Agent 会自动处理错误
-2. **使用 onUpdate 报告进度** - 对于长时间运行的工具
-3. **设置 executionMode** - 对于需要独占资源的工具使用 sequential
-4. **在 afterToolCall 中审计** - 记录工具使用情况
-5. **验证参数** - 利用 TypeBox 的静态类型
+```typescript
+const agent = new Agent({
+  beforeToolCall: async ({ toolCall, args }) => {
+    if (toolCall.name === "bash" && args.command.includes("rm -rf")) {
+      return { block: true, reason: "Dangerous command" };
+    }
+  },
+  
+  afterToolCall: async ({ toolCall, result, isError }) => {
+    if (!isError) {
+      return { details: { ...result.details, audited: true } };
+    }
+  },
+});
+```
+
+### 2.5 Review - TODO清单
+
+#### TODO-1: 掌握 AgentTool 结构 (🔴)
+**完成检查**:
+- [ ] 列举继承自 Tool 的 3 个字段
+- [ ] 列举新增的 4 个字段
+- [ ] 解释 execute 的 4 个参数
+
+#### TODO-2: 掌握参数验证 (🔴)
+**完成检查**:
+- [ ] 解释 prepareArguments 和 validateToolArguments 的区别
+- [ ] 解释 validateToolArguments 失败时的处理
+
+#### TODO-3: 掌握钩子机制 (🔴)
+**完成检查**:
+- [ ] 解释 beforeToolCall 的 block 效果
+- [ ] 解释 afterToolCall 的合并语义
+
+#### TODO-4: 掌握并行执行 (🟠)
+**完成检查**:
+- [ ] 列举三阶段
+- [ ] 解释事件顺序差异
+
+#### TODO-5: 掌握 terminate (🟠)
+**完成检查**:
+- [ ] 解释触发条件
+- [ ] 列举两个设置位置
+
+---
+
+## 3. 对抗性测试
+
+### 3.1 边界问题
+
+#### executionMode 混合批
+
+```typescript
+// 工具 A: executionMode: "sequential"
+// 工具 B: executionMode: "parallel"
+
+// 结果: 整批顺序执行
+// 规则: 一个 sequential → 全部 sequential
+```
+
+#### afterToolCallResult 合并语义
+
+```typescript
+// ❌ 期望深度合并
+return { details: { audited: true } };
+// 结果: details 整字段替换，原 details 丢失
+
+// ✅ 正确做法
+return { details: { ...result.details, audited: true } };
+```
+
+### 3.2 反事实推理
+
+**情境 1**: 如果工具找不到？
+```typescript
+LLM 调用 tool "unknown_tool"
+// prepareToolCall: 找不到 tool 定义
+// 结果: ImmediateToolCallOutcome { isError: true, result: "Tool not found" }
+// 教训: 错误被编码为 tool result，不中断流程
+```
+
+**情境 2**: 如果 beforeToolCall 不返回？
+```typescript
+beforeToolCall: async () => { await longOperation(); }
+// 结果: 阻塞工具预检，整个 batch 等待
+// 教训: beforeToolCall 应快速执行
+```
+
+**情境 3**: 如果 execute 抛异常？
+```typescript
+execute: async () => { throw new Error("Failed"); }
+// 结果: executePreparedToolCall 捕获，返回 isError: true
+// 教训: 抛异常被处理为错误 tool result
+```
+
+### 3.3 漏洞注入 - 常见错误
+
+| 错误类型 | 示例 | 后果 |
+|---------|------|------|
+| 遗漏 parameters | 无 schema | 验证失败 |
+| 深度合并期望 | 只返回部分 details | 原值丢失 |
+| 不抛异常返回错误 | 返回 error 内容 | 不是 isError |
+| terminate 混合批 | 只有部分工具 terminate | 不生效 |
+
+---
+
+## 4. 思想与迁移
+
+### 4.1 设计哲学
+
+#### 预检-执行-后处理三阶段
+
+```
+Preflight (预检):
+├─ 参数预处理
+├─ 参数验证
+├─ 钩子检查
+└─ 决定是否执行
+
+Execute (执行):
+├─ 实际调用工具
+├─ 流式进度
+└─ 返回结果
+
+Postprocess (后处理):
+├─ 钩子修改
+├─ 结果编码
+└─ 事件发出
+```
+
+**思想**: 分离关注点，每个阶段独立可控。
+
+#### 批级别终止
+
+```typescript
+// 只有全部同意才终止
+shouldTerminateToolBatch: finalizedCalls.every(f => f.result.terminate)
+```
+
+**思想**: 集体决策，防止单个工具意外终止。
+
+#### 错误编码而非中断
+
+```typescript
+// 工具失败不中断流程
+executePreparedToolCall: catch error → return { isError: true }
+```
+
+**思想**: 错误是结果的一部分，流程继续。
+
+### 4.2 可迁移思维
+
+| 思想 | 工具执行应用 | 可迁移领域 |
+|------|-------------|-----------|
+| **三阶段处理** | 预检-执行-后处理 | 请求处理、中间件 |
+| **批级别决策** | terminate 所有同意 | 分布式决策、投票 |
+| **错误编码** | isError 标记 | API设计、错误处理 |
+| **流式进度** | onUpdate 回调 | 长任务、下载 |
+| **Hook 系统** | before/after 钩子 | 拦截器、审计 |
+
+---
+
+## 源文件映射
+
+| 内容 | 源文件 | 行数 |
+|------|--------|------|
+| AgentTool 类型 | `types.ts` | L361-384 |
+| 工具执行逻辑 | `agent-loop.ts` | L373-742 |
+
+---
 
 ## 下一步
 
-→ [06 - 事件流](./06-event-flow)
+→ [L06: 事件系统](../06-event-flow)

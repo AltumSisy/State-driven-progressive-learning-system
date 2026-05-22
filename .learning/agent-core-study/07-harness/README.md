@@ -1,349 +1,255 @@
-# 07 - Harness 系统
+# L07: Harness 基础
 
-## 概述
+## 学习目标
 
-Harness 是高级功能模块，提供会话管理、上下文压缩、技能管理等能力。
+- 🔴 掌握 AgentHarness 类结构
+- 🔴 理解 AgentHarnessResources (skills, promptTemplates)
+- 🟠 理解 ExecutionEnv (fs, shell) 抽象
+- 🟠 掌握 prompt() / skill() / promptFromTemplate() 方法
+- 🟡 理解 Steering/Follow-up/NextTurn 队列管理
 
-## 目录结构
+---
 
-```
-src/harness/
-├── agent-harness.ts           # Agent 包装器
-├── messages.ts                # 消息处理
-├── prompt-templates.ts        # 提示模板
-├── skills.ts                  # 技能管理
-├── system-prompt.ts           # 系统提示
-├── types.ts                   # Harness 类型
-├── compaction/                # 上下文压缩
-│   ├── compaction.ts
-│   ├── branch-summarization.ts
-│   └── utils.ts
-├── env/                       # 环境
-│   └── nodejs.ts
-├── session/                   # 会话管理
-│   ├── session.ts
-│   ├── jsonl-repo.ts
-│   ├── jsonl-storage.ts
-│   ├── memory-repo.ts
-│   ├── memory-storage.ts
-│   ├── repo-utils.ts
-│   └── uuid.ts
-└── utils/                     # 工具
-    ├── shell-output.ts
-    └── truncate.ts
-```
+## 源文件
 
-## 会话管理
+`src/harness/agent-harness.ts` (~1000行)
 
-### Session 类
+---
+
+## 1. AgentHarness 类结构
 
 ```typescript
-import { Session } from "@earendil-works/pi-agent-core";
+// agent-harness.ts:164-205
 
-const session = new Session({
-  repo,           // SessionRepository
-  agent,          // Agent 实例
-  config?: {       // 可选配置
-    compact?: boolean;      // 是否自动压缩
-    compactThreshold?: number;  // 压缩阈值
-  }
-});
-
-// 方法
-await session.load(id);        // 加载会话
-await session.save();          // 保存会话
-await session.compact();       // 手动压缩
-session.dispose();             // 清理资源
-```
-
-### 存储仓库
-
-#### MemoryRepository（内存）
-
-```typescript
-import { MemoryRepository } from "@earendil-works/pi-agent-core";
-
-const repo = new MemoryRepository();
-```
-
-#### JsonlRepository（文件）
-
-```typescript
-import { JsonlRepository } from "@earendil-works/pi-agent-core";
-
-const repo = new JsonlRepository({
-  dir: "./sessions",  // 存储目录
-});
-```
-
-### 完整示例
-
-```typescript
-import { Agent, Session, JsonlRepository } from "@earendil-works/pi-agent-core";
-
-// 创建仓库
-const repo = new JsonlRepository({ dir: "./sessions" });
-
-// 创建 Agent
-const agent = new Agent({
-  initialState: {
-    systemPrompt: "You are a helpful assistant.",
-    model: getModel("anthropic", "claude-sonnet-4-20250514"),
-  }
-});
-
-// 创建会话
-const session = new Session({ repo, agent });
-
-// 加载或创建
-await session.load("my-session-id");
-
-// 使用
-await agent.prompt("Hello!");
-await session.save();
-```
-
-## 上下文压缩
-
-### Compaction 功能
-
-当上下文过长时自动或手动压缩：
-
-```typescript
-import {
-  compact,
-  shouldCompact,
-  estimateTokens,
-  findCutPoint,
-  generateSummary,
-} from "@earendil-works/pi-agent-core";
-
-// 估算 Token
-const tokenCount = estimateTokens(messages);
-
-// 是否应该压缩
-if (shouldCompact(messages, { threshold: 4000 })) {
-  // 找到切割点
-  const cutPoint = findCutPoint(messages);
+export class AgentHarness<TSkill, TPromptTemplate, TTool> {
+  readonly env: ExecutionEnv;
+  private session: Session;
+  private phase: AgentHarnessPhase = "idle";
+  private model: Model<any>;
+  private thinkingLevel: ThinkingLevel;
+  private systemPrompt: AgentHarnessOptions["systemPrompt"];
+  private streamOptions: AgentHarnessStreamOptions;
+  private resources: AgentHarnessResources<TSkill, TPromptTemplate>;
+  private tools = new Map<string, TTool>();
+  private steerQueue: UserMessage[] = [];
+  private followUpQueue: UserMessage[] = [];
+  private nextTurnQueue: AgentMessage[] = [];
+  private handlers = new Map<string, Set<AgentHarnessHandler>>();
   
-  // 生成摘要
-  const summary = await generateSummary(messages, model);
-  
-  // 执行压缩
-  const compacted = await compact(messages, {
-    summary,
-    cutPoint,
-  });
+  constructor(options: AgentHarnessOptions) { ... }
 }
 ```
 
-### 自动压缩配置
+---
+
+## 2. AgentHarnessOptions
 
 ```typescript
-const session = new Session({
-  repo,
-  agent,
-  config: {
-    compact: true,
-    compactThreshold: 4000,  // Token 阈值
-  }
-});
+// harness/types.ts
+
+interface AgentHarnessOptions {
+  env: ExecutionEnv;                     // 执行环境
+  session: Session;                      // 会话管理
+  model: Model<any>;                     // 当前模型
+  thinkingLevel?: ThinkingLevel;         // 推理级别
+  systemPrompt?: string | SystemPromptFn;  // 系统提示
+  streamOptions?: AgentHarnessStreamOptions;
+  tools?: TTool[];
+  activeToolNames?: string[];
+  resources?: AgentHarnessResources;
+  steeringMode?: QueueMode;
+  followUpMode?: QueueMode;
+  getApiKeyAndHeaders?: (model) => Promise<{ apiKey, headers }>;
+}
 ```
 
-### Branch Summarization（分支摘要）
+---
 
-用于保存分支会话的历史摘要：
+## 3. AgentHarnessResources
 
 ```typescript
-import {
-  collectEntriesForBranchSummary,
-  generateBranchSummary,
-  prepareBranchEntries,
-} from "@earendil-works/pi-agent-core";
+// harness/types.ts
 
-// 收集条目
-const entries = collectEntriesForBranchSummary(session);
-
-// 准备条目
-const prepared = prepareBranchEntries(entries);
-
-// 生成分支摘要
-const summary = await generateBranchSummary(prepared, model);
+interface AgentHarnessResources<TSkill, TPromptTemplate> {
+  skills?: TSkill[];
+  promptTemplates?: TPromptTemplate[];
+}
 ```
 
-## 技能管理
-
-### Skills 系统
+### Skill 定义
 
 ```typescript
-import { Skills } from "@earendil-works/pi-agent-core";
-
-const skills = new Skills({
-  // 配置
-});
-
-// 注册技能
-skills.register({
-  name: "read_file",
-  label: "Read File",
-  description: "Read file contents",
-  // ...
-});
-
-// 获取工具
-const tools = skills.toTools();
-agent.state.tools = tools;
+interface Skill {
+  name: string;
+  description: string;
+  promptTemplate?: string;
+  tools?: AgentTool[];
+  additionalInstructions?: string;
+}
 ```
 
-## 系统提示模板
-
-### 模板系统
+### PromptTemplate 定义
 
 ```typescript
-import { systemPrompt } from "@earendil-works/pi-agent-core";
-
-// 使用模板
-const prompt = systemPrompt({
-  base: "You are a helpful assistant.",
-  tools: availableTools,
-  context: additionalContext,
-});
-
-agent.state.systemPrompt = prompt;
+interface PromptTemplate {
+  name: string;
+  description: string;
+  template: string;
+  args?: string[];
+}
 ```
 
-## AgentHarness
+---
 
-### 包装器
-
-`AgentHarness` 是 `Agent` 的扩展包装，提供额外功能：
+## 4. ExecutionEnv 抽象
 
 ```typescript
-import { AgentHarness } from "@earendil-works/pi-agent-core";
+// harness/types.ts
 
-const harness = new AgentHarness({
-  agent,
-  session,
-  config: {
-    autoCompact: true,
-    // ...
-  }
-});
-
-// 使用
-await harness.prompt("Hello!");
+interface ExecutionEnv {
+  fs: FileSystem;    // 文件系统抽象
+  shell: Shell;      // Shell 抽象
+}
 ```
 
-## 工具函数
-
-### Shell Output 处理
+### FileSystem
 
 ```typescript
-import { formatShellOutput, truncateShellOutput } from "@earendil-works/pi-agent-core";
-
-// 格式化 shell 输出
-const formatted = formatShellOutput(stdout, stderr);
-
-// 截断输出
-const truncated = truncateShellOutput(output, { maxLines: 100 });
+interface FileSystem {
+  readFile(path: string): Promise<string>;
+  writeFile(path: string, content: string): Promise<void>;
+  readdir(path: string): Promise<string[]>;
+  stat(path: string): Promise<FileStat>;
+  exists(path: string): Promise<boolean>;
+  mkdir(path: string): Promise<void>;
+}
 ```
 
-### 文本截断
+### Node.js 实现
+
+源文件：`harness/env/nodejs.ts`
+
+---
+
+## 5. 核心方法
+
+### 5.1 prompt()
 
 ```typescript
-import { truncate } from "@earendil-works/pi-agent-core";
+// agent-harness.ts:603-616
 
-const truncated = truncate(text, { maxLength: 2000 });
+async prompt(text: string, options?: { images?: ImageContent[] }): Promise<AssistantMessage> {
+  if (this.phase !== "idle") throw new AgentHarnessError("busy");
+  this.phase = "turn";
+  const turnState = await this.createTurnState();
+  return await this.executeTurn(turnState, text, options);
+}
 ```
 
-## UUID 生成
+### 5.2 skill()
 
 ```typescript
-import { uuidv7 } from "@earendil-works/pi-agent-core";
+// agent-harness.ts:618-633
 
-const id = uuidv7();  // 基于时间的 UUID v7
+async skill(name: string, additionalInstructions?: string): Promise<AssistantMessage> {
+  const skill = turnState.resources.skills?.find(s => s.name === name);
+  if (!skill) throw new AgentHarnessError("invalid_argument");
+  return await this.executeTurn(turnState, formatSkillInvocation(skill, additionalInstructions));
+}
 ```
 
-## 完整应用示例
+### 5.3 promptFromTemplate()
 
 ```typescript
-import {
-  Agent,
-  Session,
-  JsonlRepository,
-  Skills,
-  systemPrompt,
-  uuidv7,
-} from "@earendil-works/pi-agent-core";
+// agent-harness.ts:635-650
 
-async function main() {
-  // 1. 初始化仓库
-  const repo = new JsonlRepository({ dir: "./data/sessions" });
-  
-  // 2. 初始化技能
-  const skills = new Skills();
-  await skills.loadFromDir("./skills");
-  
-  // 3. 创建 Agent
-  const agent = new Agent({
-    initialState: {
-      systemPrompt: systemPrompt({
-        base: "You are a coding assistant.",
-        tools: skills.getDescriptions(),
-      }),
-      model: getModel("anthropic", "claude-sonnet-4-20250514"),
-      tools: skills.toTools(),
-    },
-    beforeToolCall: async ({ toolCall, args }) => {
-      // 安全检查
-      console.log(`Executing: ${toolCall.name}`);
-    },
-  });
-  
-  // 4. 创建会话
-  const session = new Session({
-    repo,
-    agent,
-    config: {
-      compact: true,
-      compactThreshold: 8000,
-    }
-  });
-  
-  // 5. 加载或创建会话
-  const sessionId = process.argv[2] || uuidv7();
-  await session.load(sessionId);
-  console.log(`Session: ${sessionId}`);
-  
-  // 6. 运行交互
-  agent.subscribe((event) => {
-    if (event.type === "message_update") {
-      const { assistantMessageEvent } = event;
-      if (assistantMessageEvent.type === "text_delta") {
-        process.stdout.write(assistantMessageEvent.delta);
-      }
-    }
-    if (event.type === "agent_end") {
-      console.log("\n---");
-    }
-  });
-  
-  // 7. 主循环
-  while (true) {
-    const input = await promptUser();
-    if (input === "exit") break;
-    
-    await agent.prompt(input);
-    await session.save();
-  }
-  
-  // 8. 清理
-  session.dispose();
+async promptFromTemplate(name: string, args: string[] = []): Promise<AssistantMessage> {
+  const template = turnState.resources.promptTemplates?.find(t => t.name === name);
+  return await this.executeTurn(turnState, formatPromptTemplateInvocation(template, args));
+}
+```
+
+---
+
+## 6. 队列管理
+
+### steer / followUp / nextTurn
+
+```typescript
+// agent-harness.ts:652-667
+
+async steer(text: string, options?: { images }): Promise<void> {
+  if (this.phase === "idle") throw new AgentHarnessError("invalid_state");
+  this.steerQueue.push(createUserMessage(text, options?.images));
+  await this.emitQueueUpdate();
 }
 
-main().catch(console.error);
+async followUp(text: string, options?: { images }): Promise<void> {
+  this.followUpQueue.push(createUserMessage(text, options?.images));
+  await this.emitQueueUpdate();
+}
+
+async nextTurn(text: string, options?: { images }): Promise<void> {
+  this.nextTurnQueue.push(createUserMessage(text, options?.images));
+  await this.emitQueueUpdate();
+}
 ```
+
+---
+
+## 7. 事件订阅
+
+### subscribe()
+
+```typescript
+// agent-harness.ts:969-978
+
+subscribe(
+  listener: (event: AgentHarnessEvent, signal?: AbortSignal) => Promise<void> | void
+): () => void {
+  handlers.get("*").add(listener);
+  return () => handlers.delete(listener);
+}
+```
+
+### on() - 特定事件
+
+```typescript
+// agent-harness.ts:981-994
+
+on<TType extends keyof AgentHarnessEventResultMap>(
+  type: TType,
+  handler: (event) => Promise<AgentHarnessEventResultMap[TType]>
+): () => void;
+```
+
+**支持的事件类型**：
+- `before_agent_start`
+- `tool_call` / `tool_result`
+- `context`
+- `session_before_compact` / `session_before_tree`
+- `before_provider_request` / `before_provider_payload`
+
+---
+
+## TODO 清单
+
+### TODO-1: 掌握 AgentHarness 结构 (🔴)
+**完成检查**:
+- [ ] 列举构造函数的核心参数
+- [ ] 列举三种队列 (steerQueue, followUpQueue, nextTurnQueue)
+
+### TODO-2: 掌握 Resources (🔴)
+**完成检查**:
+- [ ] 列举 Skill 的 5 个字段
+- [ ] 列举 PromptTemplate 的 4 个字段
+
+### TODO-3: 掌握 ExecutionEnv (🟠)
+**完成检查**:
+- [ ] 列举 FileSystem 的 6 个方法
+
+---
 
 ## 下一步
 
-→ [08 - 实践示例](./08-examples)
+→ [L08: Session 管理](./08-session)

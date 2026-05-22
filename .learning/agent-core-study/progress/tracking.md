@@ -3,83 +3,74 @@
 ## 项目信息
 
 - **目标包**: `@earendil-works/pi-agent-core`
-- **版本**: 0.75.4
+- **源码路径**: `.learning/agent-core-study/pi/agent/`
+- **学习方法**: FastLearn (快速理解 → 实践验证)
 - **开始时间**: 2026-05-22
-- **学习方法**: FastLearn (Method 4)
+- **课程框架**: 整合4节框架 (心智模型构建 + SQ3R + 对抗性测试 + 思想与迁移)
 
-## 完成清单
+## 课程列表 (重构后 11 课)
 
-- [x] 项目初始化和目录结构
-- [x] 01 - 架构概览
-- [x] 02 - 核心类型系统
-- [x] 03 - Agent 类
-- [x] 04 - Agent 循环
-- [x] 05 - 工具系统
-- [x] 06 - 事件流
-- [x] 07 - Harness 系统
-- [x] 08 - 实践示例
+| ID | 课程标题 | 状态 | 内容框架 |
+|----|---------|------|----------|
+| L01 | 架构概览 + pi/ai 依赖 | ✅ 已更新 | 4节整合框架 |
+| L02 | 类型系统 (合并) | ✅ 已更新 | 4节整合框架 |
+| L03 | Agent Loop 底层机制 | ✅ 已更新 | 4节整合框架 |
+| L04 | Agent 类 (包装层) | ✅ 已更新 | 4节整合框架 |
+| L05 | 工具执行完整流程 | ✅ 已更新 | 4节整合框架 |
+| L06 | 事件系统 | ✅ 已更新 | 4节整合框架 |
+| L07 | Harness 基础 | ✅ 已创建 | 4节整合框架 |
+| L08 | Session 管理 | ✅ 已创建 | 4节整合框架 |
+| L09 | 上下文压缩 | ✅ 已更新 | 4节整合框架 |
+| L10 | Proxy 与浏览器支持 | ✅ 已更新 | 4节整合框架 |
+| L11 | coding-agent 实例分析 | ✅ 已更新 | 4节整合框架 |
 
-## 核心概念总结
+## 整合框架结构
 
-### 架构
-```
-Application → Agent → agentLoop → pi-ai (LLM Provider)
-                  ↓
-               Events → UI Updates
-```
+每课包含 4 个主要部分：
 
-### 关键类型
-- `AgentMessage`: 可扩展的消息类型
-- `AgentTool`: 工具定义（TypeBox 参数）
-- `AgentEvent`: 生命周期事件
-- `AgentState`: 状态管理
+### 1. 心智模型构建
+- **背景**: 历史演进、问题动机
+- **目标**: 核心痛点对比表
+- **专家视角**: 概念网络图
 
-### 两种使用模式
-1. **Agent 类**: 高级 API，自动等待订阅者，适合 UI
-2. **agentLoop**: 低级 API，观察性流，适合批处理
+### 2. 结构化学习 (SQ3R)
+- **Survey**: 流程/架构概览图
+- **Question**: 关键问题驱动
+- **Read**: 源代码映射表
+- **Recite**: 使用模板
+- **Review**: TODO清单 (渐进披露)
 
-### 事件序列
-```
-agent_start → turn_start → message_* → turn_end → agent_end
-                    ↓
-            tool_execution_* (if tools)
-```
+### 3. 对抗性测试
+- **边界问题**: 实际边界情况
+- **反事实推理**: 如果...会怎样
+- **漏洞注入**: 常见错误表
 
-### 工具执行
-- **Parallel**: 并发执行，默认
-- **Sequential**: 顺序执行
+### 4. 思想与迁移
+- **设计哲学**: 核心设计思想
+- **可迁移思维**: 思想 + 应用 + 迁移领域表
 
-### Harness 功能
-- Session 管理（持久化）
-- 上下文压缩
-- 技能管理
-- UUID 生成
+## 源文件覆盖
 
-## 下一步行动
+| 源文件 | 覆盖课程 | 行数 |
+|--------|---------|------|
+| index.ts | L01 | ~45 |
+| types.ts | L02, L05, L06 | ~420 |
+| agent.ts | L04, L06 | ~560 |
+| agent-loop.ts | L03, L05 | ~740 |
+| harness/types.ts | L02, L07 | ~300 |
+| agent-harness.ts | L07 | ~1000 |
+| session/*.ts | L08 | ~500 |
+| compaction/*.ts | L09 | ~400 |
+| proxy.ts | L10 | ~100 |
+| node.ts | L10 | ~50 |
+| examples/ | L11 | 选读 |
 
-1. [ ] 阅读源代码深入理解实现
-2. [ ] 构建简单示例应用
-3. [ ] 学习 `@earendil-works/pi-ai` 依赖包
-4. [ ] 查看测试文件了解使用模式
+## 源码总计
 
-## 文件映射
-
-| 学习文档 | 源文件 |
-|---------|--------|
-| 01-overview | README.md, package.json |
-| 02-core-types | src/types.ts |
-| 03-agent-class | src/agent.ts |
-| 04-agent-loop | src/agent-loop.ts |
-| 05-tool-system | src/types.ts (AgentTool) |
-| 06-event-flow | src/types.ts (AgentEvent) |
-| 07-harness | src/harness/ |
-| 08-examples | - |
-
-## 学习时间
-
-- 文档创建: ~30 分钟
-- 预计深入学习: 2-3 小时
+- **pi/ai 基础层**: 外部依赖
+- **pi-agent-core 核心层**: ~4000 行
+- **pi-coding-agent 应用层**: 实例参考
 
 ---
 
-**状态**: 基础学习完成，准备深入实践
+**状态**: 所有课程已更新完成，准备开始学习 L01

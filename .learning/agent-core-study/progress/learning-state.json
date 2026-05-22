@@ -1,0 +1,60 @@
+{
+  "version": "1.0.0",
+  "learning_state": {
+    "domain": "agent-core-study",
+    "current_lesson": "L01",
+    "global_status": "active",
+    "started_at": "2026-05-22T14:30:00",
+    "last_session": null,
+    "total_study_time_minutes": 0,
+    "method": "FastLearn"
+  },
+  "syllabus_progress": {
+    "L01": {
+      "status": "in_progress",
+      "title": "架构概览 + pi/ai 依赖",
+      "todos_total": 3,
+      "todos_completed": 0
+    },
+    "L02": {
+      "status": "locked",
+      "title": "类型系统 (合并)"
+    },
+    "L03": {
+      "status": "locked",
+      "title": "Agent Loop 底层机制"
+    },
+    "L04": {
+      "status": "locked",
+      "title": "Agent 类 (包装层)"
+    },
+    "L05": {
+      "status": "locked",
+      "title": "工具执行完整流程"
+    },
+    "L06": {
+      "status": "locked",
+      "title": "事件系统"
+    },
+    "L07": {
+      "status": "locked",
+      "title": "Harness 基础"
+    },
+    "L08": {
+      "status": "locked",
+      "title": "Session 管理"
+    },
+    "L09": {
+      "status": "locked",
+      "title": "上下文压缩"
+    },
+    "L10": {
+      "status": "locked",
+      "title": "Proxy 与浏览器支持"
+    },
+    "L11": {
+      "status": "locked",
+      "title": "coding-agent 实例分析"
+    }
+  }
+}

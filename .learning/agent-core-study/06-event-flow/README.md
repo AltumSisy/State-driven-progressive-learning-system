@@ -1,384 +1,342 @@
-# 06 - 事件流
+# L06: 事件系统
 
-## 概述
+---
 
-Agent 通过事件流与外部通信。理解事件序列对构建响应式 UI 至关重要。
+## 1. 心智模型构建
 
-## 事件类型概览
+### 1.1 背景
 
-| 事件 | 触发时机 | 数据 |
-|-----|---------|------|
-| `agent_start` | Agent 开始处理 | - |
-| `agent_end` | Agent 完成 | `messages: AgentMessage[]` |
-| `turn_start` | 新 Turn 开始 | - |
-| `turn_end` | Turn 完成 | `message`, `toolResults` |
-| `message_start` | 消息开始 | `message` |
-| `message_update` | 消息更新（仅助手） | `message`, `assistantMessageEvent` |
-| `message_end` | 消息完成 | `message` |
-| `tool_execution_start` | 工具开始 | `toolCallId`, `toolName`, `args` |
-| `tool_execution_update` | 工具进度 | `toolCallId`, `toolName`, `args`, `partialResult` |
-| `tool_execution_end` | 工具完成 | `toolCallId`, `toolName`, `result`, `isError` |
-
-## Prompt 事件序列
-
-### 无工具调用
+#### 事件系统的演进
 
 ```
-agent_start
-│
-├─ turn_start
-│  │
-│  ├─ message_start   { role: "user" }
-│  ├─ message_end
-│  │
-│  ├─ message_start   { role: "assistant" }
-│  ├─ message_update  { type: "text_delta", delta: "Hello" }
-│  ├─ message_update  { type: "text_delta", delta: "!" }
-│  ├─ message_end
-│  │
-│  └─ turn_end        { message: assistantMessage, toolResults: [] }
-│
-└─ agent_end          { messages: [...] }
+早期事件处理:
+├─ 回调函数: onText, onComplete, onError
+├─ 问题: 回调地狱，顺序不确定
+├─ 多监听器: 手动管理，容易遗漏
+└─ 无状态追踪: 不知道当前状态
+
+中期需求:
+├─ 统一事件流 → AgentEvent 类型
+├─ 状态同步 → processEvents 更新
+├─ 多监听器 → subscribe 队列
+├─ 屏障行为 → 等待监听器完成
+└─ 事件顺序 → 保证顺序执行
+
+→ agent-core 提供完整事件系统
 ```
 
-### 带工具调用
+---
+
+### 1.2 目标
+
+#### 核心痛点
+
+| 痛点 | 回调模式 | agent-core 事件系统 |
+|------|---------|-------------------|
+| 类型安全 | 无类型约束 | AgentEvent 联合类型 |
+| 状态同步 | 手动更新 | processEvents 自动 |
+| 监听器管理 | 手动注册 | subscribe 队列 |
+| 顺序保证 | 不确定 | await 线性执行 |
+| 屏障行为 | 无 | message_end 等待 |
+
+---
+
+### 1.3 专家视角 - 概念网络
 
 ```
-agent_start
+事件系统概念网络:
+
+事件类型:
+├─ AgentEvent (10种)
+│   ├─ agent_start / agent_end ← Agent 生命周期
+│   ├─ turn_start / turn_end ← Turn 生命周期
+│   ├─ message_start / message_update / message_end ← 消息流
+│   └─ tool_execution_start / update / end ← 工具执行
 │
-├─ turn_start
-│  │
-│  ├─ message_start   { role: "user" }
-│  ├─ message_end
-│  │
-│  ├─ message_start   { role: "assistant", content: [toolCall] }
-│  ├─ message_end     // 助手消息包含工具调用
-│  │
-│  ├─ tool_execution_start  { toolCallId, toolName, args }
-│  ├─ tool_execution_update { partialResult }
-│  ├─ tool_execution_end    { result, isError }
-│  │
-│  ├─ message_start   { role: "toolResult" }
-│  ├─ message_end
-│  │
-│  └─ turn_end        { message, toolResults }
+├─ Discriminated Union
+│   └─ type 字段辨识，自动推断其他字段
 │
-├─ turn_start         // 下一 Turn
-│  │
-│  ├─ message_start   { role: "assistant" }  // 对工具结果的响应
-│  ├─ message_update
-│  ├─ message_end
-│  │
-│  └─ turn_end
+├─ AssistantMessageEvent (来自 pi-ai)
+│   ├─ text_delta
+│   ├─ thinking_delta
+│   ├─ tool_call_delta
+│   └─ image_delta
+
+事件处理:
+├─ processEvents()
+│   ├─ 状态更新: streamingMessage, pendingToolCalls, messages
+│   ├─ 监听器分发: await listener(event, signal)
+│   └─ 错误隔离: 监听器抛异常不影响状态
 │
-└─ agent_end
+├─ subscribe()
+│   ├─ listeners: Set<AgentEventListener>
+│   └─ 返回 unsubscribe 函数
+│
+├─ agent_end 屏障
+│   ├─ 等待所有监听器完成
+│   ├─ finishRun() 才 resolve activeRun
+│   └─ waitForIdle() 返回
 ```
 
-## Continue 事件序列
+---
+
+## 2. 结构化学习 (SQ3R)
+
+### 2.1 Survey - 事件序列概览
+
+```
+事件序列流程:
+
+无工具调用:
+┌─────────────────────────────────────────────────────────┐
+│  prompt("Hello")                                         │
+│                                                          │
+│  agent_start                                             │
+│      │                                                    │
+│  turn_start                                              │
+│      │                                                    │
+│  message_start { user }                                  │
+│  message_end                                             │
+│      │                                                    │
+│  message_start { assistant }                             │
+│  message_update { text_delta: "Hel" }                    │
+│  message_update { text_delta: "lo!" }                    │
+│  message_end                                             │
+│      │                                                    │
+│  turn_end { toolResults: [] }                            │
+│      │                                                    │
+│  agent_end { messages }                                  │
+└─────────────────────────────────────────────────────────┘
+
+带工具调用:
+┌─────────────────────────────────────────────────────────┐
+│  prompt("Read file")                                     │
+│                                                          │
+│  agent_start                                             │
+│  turn_start                                              │
+│  message_start/end { user }                              │
+│  message_start { assistant with toolCall }               │
+│  message_end                                             │
+│      │                                                    │
+│  tool_execution_start { toolCallId, toolName }           │
+│  tool_execution_end { result, isError }                  │
+│      │                                                    │
+│  message_start/end { toolResult }                        │
+│  turn_end                                                │
+│      │                                                    │
+│  turn_start ← 新回合开始                                 │
+│  message_start/update/end { assistant response }         │
+│  turn_end                                                │
+│      │                                                    │
+│  agent_end { messages }                                  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 2.2 Question - 关键问题驱动
+
+**Q1**: AgentEvent 为什么使用 Discriminated Union？
+**Q2**: message_end 时执行哪两个状态更新？
+**Q3**: 监听器抛异常时会发生什么？
+**Q4**: agent_end 屏障的具体行为是什么？
+
+### 2.3 Read - 源代码映射
+
+| 内容 | 源文件 | 行数 |
+|------|--------|------|
+| AgentEvent 定义 | `types.ts` | L403-418 |
+| AssistantMessageEvent | `pi-ai` | - |
+| processEvents | `agent.ts` | L509-556 |
+| subscribe | `agent.ts` | L230-234 |
+| waitForIdle | `agent.ts` | L299-310 |
+| finishRun | `agent.ts` | L294-297 |
+
+### 2.4 Recite - 使用模板
+
+#### 事件监听模板
 
 ```typescript
-// 从现有上下文继续
-await agent.continue();
-```
-
-序列类似，但没有初始 user message：
-
-```
-agent_start
-│
-├─ turn_start
-│  │
-│  ├─ message_start   { role: "assistant" }
-│  ├─ message_update
-│  ├─ message_end
-│  │
-│  └─ turn_end
-│
-└─ agent_end
-```
-
-**注意**: 最后一条消息必须是 `user` 或 `toolResult`。
-
-## Steering 事件序列
-
-当 Agent 运行时发送 steering 消息：
-
-```
-agent_start
-│
-├─ turn_start
-│  ├─ ...
-│  └─ turn_end
-│
-├─ turn_start         // Steering 触发的 Turn
-│  ├─ message_start   { role: "user" }  // steering 消息
-│  ├─ message_end
-│  ├─ message_start   { role: "assistant" }
-│  ├─ ...
-│  └─ turn_end
-│
-└─ agent_end
-```
-
-## Follow-up 事件序列
-
-当 Agent 完成后有 follow-up 消息：
-
-```
-agent_start
-│
-├─ turn_start
-│  └─ ...
-│  └─ turn_end
-│
-├─ turn_start         // Follow-up 触发的 Turn
-│  ├─ message_start   { role: "user" }  // follow-up 消息
-│  ├─ message_end
-│  ├─ message_start   { role: "assistant" }
-│  ├─ ...
-│  └─ turn_end
-│
-└─ agent_end
-```
-
-## 多工具调用事件序列
-
-### Parallel 模式（默认）
-
-```
-// 3 个工具并发执行
-├─ tool_execution_start  { toolCallId: A }
-├─ tool_execution_start  { toolCallId: B }
-├─ tool_execution_start  { toolCallId: C }
-│
-├─ tool_execution_end    { toolCallId: B }  // B 先完成
-├─ tool_execution_end    { toolCallId: A }  // A 后完成
-├─ tool_execution_end    { toolCallId: C }  // C 最后
-│
-// 结果消息按助手原始顺序
-├─ message_start         { toolResult: A }
-├─ message_end
-├─ message_start         { toolResult: B }
-├─ message_end
-├─ message_start         { toolResult: C }
-├─ message_end
-```
-
-### Sequential 模式
-
-```
-├─ tool_execution_start  { toolCallId: A }
-├─ tool_execution_end    { toolCallId: A }
-├─ message_start         { toolResult: A }
-├─ message_end
-│
-├─ tool_execution_start  { toolCallId: B }
-├─ tool_execution_end    { toolCallId: B }
-├─ message_start         { toolResult: B }
-├─ message_end
-│
-├─ tool_execution_start  { toolCallId: C }
-├─ tool_execution_end    { toolCallId: C }
-├─ message_start         { toolResult: C }
-├─ message_end
-```
-
-## message_update 详解
-
-仅用于 assistant 消息，包含 `assistantMessageEvent`：
-
-```typescript
-interface AssistantMessageEvent {
-  // 类型决定 data 内容
-  type: "text_delta" | "thinking_delta" | "signature_delta" | 
-        "toolCall_start" | "toolCall_delta" | "toolCall_end" |
-        "toolResult" | "stop" | "error";
-}
-
-// 示例事件序列
-├─ message_start
-├─ message_update { type: "thinking_delta", delta: "..." }  // 推理内容
-├─ message_update { type: "text_delta", delta: "Based on" }    // 文本增量
-├─ message_update { type: "text_delta", delta: " my analysis" }
-├─ message_update { type: "toolCall_start", toolCall: {...} } // 工具调用开始
-├─ message_update { type: "toolCall_end" }
-├─ message_end
-```
-
-## 订阅处理
-
-### Agent 类订阅
-
-```typescript
-agent.subscribe(async (event, signal) => {
-  // Agent 会 await 这个 Promise
-  await handleEvent(event);
-});
-
-// 取消订阅
-const unsubscribe = agent.subscribe(...);
-unsubscribe();
-```
-
-**重要特性**:
-- 监听器按注册顺序 `await`
-- `agent_end` 监听器完成后 Agent 才空闲
-- 监听器接收中止信号
-
-### agentLoop 处理
-
-```typescript
-for await (const event of agentLoop(...)) {
-  // 不会等待你的处理
-  handleEvent(event);
-}
-```
-
-**区别**: `agentLoop` 是观察性流，不等待你的事件处理。
-
-## UI 更新模式
-
-### 消息列表更新
-
-```typescript
-agent.subscribe((event) => {
+agent.subscribe((event, signal) => {
   switch (event.type) {
-    case "message_start":
-      ui.addMessage(event.message);
-      break;
     case "message_update":
       if (event.assistantMessageEvent.type === "text_delta") {
-        ui.appendToLastMessage(event.assistantMessageEvent.delta);
+        process.stdout.write(event.assistantMessageEvent.delta);
       }
       break;
-    case "message_end":
-      ui.finalizeMessage(event.message);
-      break;
-  }
-});
-```
 
-### 工具执行更新
-
-```typescript
-agent.subscribe((event) => {
-  switch (event.type) {
     case "tool_execution_start":
-      ui.showToolIndicator(event.toolCallId, event.toolName);
+      console.log(`Tool ${event.toolName} starting...`);
       break;
-    case "tool_execution_update":
-      ui.updateToolProgress(event.toolCallId, event.partialResult);
-      break;
+
     case "tool_execution_end":
       if (event.isError) {
-        ui.showToolError(event.toolCallId, event.result);
-      } else {
-        ui.showToolSuccess(event.toolCallId, event.result);
+        console.error(`Tool ${event.toolName} failed`);
       }
+      break;
+
+    case "agent_end":
+      saveSession(event.messages);
       break;
   }
 });
 ```
 
-### 状态指示器
+#### 多监听器模板
 
 ```typescript
-agent.subscribe((event) => {
-  switch (event.type) {
-    case "agent_start":
-      ui.setStatus("Running");
-      break;
-    case "turn_start":
-      ui.setStatus("Thinking...");
-      break;
-    case "tool_execution_start":
-      ui.setStatus(`Running ${event.toolName}...`);
-      break;
-    case "agent_end":
-      ui.setStatus("Idle");
-      break;
-  }
-});
+const unsubscribe1 = agent.subscribe(listener1);
+const unsubscribe2 = agent.subscribe(listener2);
+
+// 取消订阅
+unsubscribe1();
 ```
 
-## 完整事件处理示例
+### 2.5 Review - TODO清单
+
+#### TODO-1: 掌握事件类型 (🔴)
+**完成检查**:
+- [ ] 列举 10 种 AgentEvent 类型
+- [ ] 解释 Discriminated Union 的优势
+
+#### TODO-2: 掌握状态更新 (🔴)
+**完成检查**:
+- [ ] 列举 message_end 时执行的两个状态更新
+- [ ] 解释 streamingMessage 的生命周期
+
+#### TODO-3: 掌握监听器机制 (🟠)
+**完成检查**:
+- [ ] 解释监听器抛异常时的处理
+- [ ] 解释 unsubscribe 的实现
+
+#### TODO-4: 掌握屏障行为 (🟠)
+**完成检查**:
+- [ ] 解释 agent_end 后 Agent 空闲的原因
+- [ ] 解释 waitForIdle 的等待机制
+
+---
+
+## 3. 对抗性测试
+
+### 3.1 边界问题
+
+#### 监听器执行顺序
 
 ```typescript
-const agent = new Agent({
-  initialState: { /* ... */ }
-});
-
-// 消息存储
-const messages: AgentMessage[] = [];
-const streamingContent = new Map<string, string>();
-const pendingTools = new Set<string>();
-
-agent.subscribe(async (event, signal) => {
-  switch (event.type) {
-    case "agent_start":
-      console.log("Agent started");
-      break;
-      
-    case "message_start":
-      messages.push(event.message);
-      if (event.message.role === "assistant") {
-        streamingContent.set(event.message.id || "latest", "");
-      }
-      break;
-      
-    case "message_update": {
-      const { assistantMessageEvent } = event;
-      if (assistantMessageEvent.type === "text_delta") {
-        const current = streamingContent.get("latest") || "";
-        streamingContent.set("latest", current + assistantMessageEvent.delta);
-        ui.updateStreamingText(streamingContent.get("latest")!);
-      }
-      break;
-    }
-      
-    case "message_end":
-      ui.finalizeMessage(event.message);
-      break;
-      
-    case "tool_execution_start":
-      pendingTools.add(event.toolCallId);
-      ui.showToolRunning(event.toolCallId, event.toolName);
-      break;
-      
-    case "tool_execution_end":
-      pendingTools.delete(event.toolCallId);
-      if (event.isError) {
-        ui.showToolError(event.toolCallId, event.result);
-      } else {
-        ui.showToolComplete(event.toolCallId, event.result);
-      }
-      break;
-      
-    case "turn_end":
-      console.log(`Turn completed with ${event.toolResults.length} tool results`);
-      break;
-      
-    case "agent_end":
-      console.log("Agent completed");
-      await saveSession(event.messages);  // 屏障工作
-      break;
-  }
-});
-
-// 运行 Agent
-await agent.prompt("Hello!");
-await agent.waitForIdle();  // 确保所有事件处理完成
+// 监听器按添加顺序执行，线性等待
+agent.subscribe(listener1);  // 先执行
+agent.subscribe(listener2);  // 后执行
+// 不是并发执行，是串行 await
 ```
 
-## 事件时序保证
+#### message_end 状态更新
 
-1. **agent_start** 是第一个事件
-2. **agent_end** 是最后一个事件
-3. **turn_start** 在 **turn_end** 之前
-4. **message_start** 在 **message_end** 之前
-5. **tool_execution_start** 在 **tool_execution_end** 之前
-6. **message_end** 在对应的 **tool_execution_start** 之前（助手消息包含工具调用时）
+```typescript
+case "message_end":
+  this._state.streamingMessage = undefined;  // 清除
+  this._state.messages.push(event.message);  // 持久化
+```
+
+**边界**: 两个更新在同一次 message_end 中完成。
+
+### 3.2 反事实推理
+
+**情境 1**: 如果监听器执行长时间操作？
+```typescript
+agent.subscribe(async (event) => {
+  if (event.type === "agent_end") {
+    await saveToDatabase();  // 5秒
+  }
+});
+// 结果：waitForIdle() 等待 5秒
+// 教训：agent_end 监听器应快速完成，或异步处理
+```
+
+**情境 2**: 如果监听器抛异常？
+```typescript
+agent.subscribe(async () => {
+  throw new Error("Listener error");
+});
+// 结果：processEvents 中 await listener() 抛异常
+// 教训：监听器应自行捕获错误
+```
+
+**情境 3**: 如果没有订阅任何监听器？
+```typescript
+const agent = new Agent({...});
+await agent.prompt("Hello");  // 无 subscribe
+// 结果：正常工作，事件发出但无处理
+// 教训：不订阅也能用，但无法追踪进度
+```
+
+### 3.3 漏洞注入 - 常见错误
+
+| 错误类型 | 示例 | 后果 |
+|---------|------|------|
+| 监听器未捕获错误 | `throw new Error()` | 中断事件处理 |
+| 长时间监听器 | `await sleep(10000)` | 阻塞后续流程 |
+| 遗漏 agent_end 处理 | 不处理 final messages | 数据丢失 |
+| 忽略 signal | 不检查中止信号 | 无法取消 |
+
+---
+
+## 4. 思想与迁移
+
+### 4.1 设计哲学
+
+#### Discriminated Union
+
+```typescript
+type AgentEvent =
+  | { type: "agent_start" }
+  | { type: "agent_end"; messages: AgentMessage[] };
+```
+
+**思想**: TypeScript 根据 `type` 字段自动推断其他字段，switch 语句有完整性检查。
+
+#### 屏障行为
+
+```typescript
+// Agent 类等待监听器
+for (const listener of this.listeners) {
+  await listener(event, signal);  // 阻塞等待
+}
+
+// agentLoop 不等待
+emit({ type: "message_end" });  // 立即继续
+```
+
+**思想**: 在关键节点等待，保证消费者处理完成。
+
+#### 观察性分离
+
+```
+agentLoop: 观察性流 (不等待消费者)
+Agent 类: 控制性流 (等待消费者完成)
+```
+
+**思想**: 分离观察和控制，让底层纯粹，上层可控。
+
+### 4.2 可迁移思维
+
+| 思想 | 事件系统应用 | 可迁移领域 |
+|------|-------------|-----------|
+| **Discriminated Union** | AgentEvent 类型 | Redux action、消息协议 |
+| **屏障行为** | agent_end 等待 | 状态机、事件系统 |
+| **观察性分离** | agentLoop vs Agent | 流处理、消息总线 |
+| **监听器队列** | subscribe Set | 发布订阅模式 |
+| **线性执行** | await listener() | 任务队列、中间件 |
+
+---
+
+## 源文件映射
+
+| 内容 | 源文件 | 行数 |
+|------|--------|------|
+| AgentEvent 类型 | `types.ts` | L403-418 |
+| processEvents | `agent.ts` | L509-556 |
+| subscribe | `agent.ts` | L230-234 |
+
+---
 
 ## 下一步
 
-→ [07 - Harness 系统](./07-harness)
+→ [L07: Harness 基础](../07-harness-base)
