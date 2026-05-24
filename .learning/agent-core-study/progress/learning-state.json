@@ -5,8 +5,8 @@
     "current_lesson": "L01",
     "global_status": "active",
     "started_at": "2026-05-22T14:30:00",
-    "last_session": null,
-    "total_study_time_minutes": 0,
+    "last_session": "2026-05-24T00:00:00",
+    "total_study_time_minutes": 25,
     "method": "FastLearn"
   },
   "syllabus_progress": {
@@ -14,7 +14,57 @@
       "status": "in_progress",
       "title": "架构概览 + pi/ai 依赖",
       "todos_total": 3,
-      "todos_completed": 0
+      "todos_completed": 0,
+      "concepts_progress": {
+        "#1_agentLoop_Agent_AgentHarness": {
+          "name": "三层架构",
+          "level": "L1",
+          "completed": true,
+          "notes": "理解三层：agentLoop(无状态引擎) → Agent(包装层+等待) → AgentHarness(应用框架)"
+        },
+        "#2_AgentMessage_Message": {
+          "name": "双层抽象",
+          "level": "L1",
+          "completed": true,
+          "notes": "AgentMessage(应用层可扩展) → convertToLlm → Message(LLM标准)"
+        },
+        "#3_AgentContext_AgentState": {
+          "name": "快照隔离",
+          "level": "L1",
+          "completed": true,
+          "notes": "AgentState(长期状态) → prompt/continue时创建 → AgentContext(单次快照)"
+        },
+        "#4_convertToLlm": {
+          "name": "转换契约",
+          "level": "L1",
+          "completed": true,
+          "notes": "不能抛异常，必须返回有效Message[]，空数组会导致LLM无上下文"
+        },
+        "#5_AgentEvent": {
+          "name": "事件流",
+          "level": "L1",
+          "completed": true,
+          "notes": "10种事件，agent_end后需等待监听器完成，isStreaming=false才真正结束"
+        },
+        "#6_AgentLoopConfig": {
+          "name": "配置入口",
+          "level": "L0",
+          "completed": false,
+          "notes": "待学习"
+        },
+        "#7_CustomAgentMessages": {
+          "name": "声明合并扩展",
+          "level": "L0",
+          "completed": false,
+          "notes": "待学习"
+        },
+        "#8_pi-ai基础类型": {
+          "name": "外部依赖",
+          "level": "L0",
+          "completed": false,
+          "notes": "待学习"
+        }
+      }
     },
     "L02": {
       "status": "locked",
@@ -56,5 +106,19 @@
       "status": "locked",
       "title": "coding-agent 实例分析"
     }
-  }
+  },
+  "session_log": [
+    {
+      "date": "2026-05-22",
+      "action": "started",
+      "lesson": "L01"
+    },
+    {
+      "date": "2026-05-24",
+      "action": "fastlearn_session",
+      "lesson": "L01",
+      "concepts_covered": 5,
+      "notes": "完成概念#1-#5，平均L1层级理解"
+    }
+  ]
 }
