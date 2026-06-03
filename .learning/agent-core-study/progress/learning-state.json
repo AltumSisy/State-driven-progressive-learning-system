@@ -2,19 +2,19 @@
   "version": "1.0.0",
   "learning_state": {
     "domain": "agent-core-study",
-    "current_lesson": "L01",
+    "current_lesson": "L02",
     "global_status": "active",
     "started_at": "2026-05-22T14:30:00",
-    "last_session": "2026-05-24T00:00:00",
-    "total_study_time_minutes": 25,
+    "last_session": "2026-06-03T00:00:00",
+    "total_study_time_minutes": 45,
     "method": "FastLearn"
   },
   "syllabus_progress": {
     "L01": {
-      "status": "in_progress",
+      "status": "completed",
       "title": "架构概览 + pi/ai 依赖",
       "todos_total": 3,
-      "todos_completed": 0,
+      "todos_completed": 3,
       "concepts_progress": {
         "#1_agentLoop_Agent_AgentHarness": {
           "name": "三层架构",
@@ -48,27 +48,73 @@
         },
         "#6_AgentLoopConfig": {
           "name": "配置入口",
-          "level": "L0",
-          "completed": false,
-          "notes": "待学习"
+          "level": "L1",
+          "completed": true,
+          "notes": "L01暂不深入，后续课程会详细讲解"
         },
         "#7_CustomAgentMessages": {
           "name": "声明合并扩展",
-          "level": "L0",
-          "completed": false,
-          "notes": "待学习"
+          "level": "L1",
+          "completed": true,
+          "notes": "通过声明合并扩展CustomAgentMessages接口添加自定义消息类型"
         },
         "#8_pi-ai基础类型": {
           "name": "外部依赖",
-          "level": "L0",
-          "completed": false,
-          "notes": "待学习"
+          "level": "L1",
+          "completed": true,
+          "notes": "Message, Model, Tool, AssistantMessageEvent等来自pi-ai"
         }
       }
     },
     "L02": {
-      "status": "locked",
-      "title": "类型系统 (合并)"
+      "status": "completed",
+      "title": "类型系统 (合并)",
+      "todos_total": 4,
+      "todos_completed": 4,
+      "concepts_progress": {
+        "#1_AgentState_mutable_readonly": {
+          "name": "AgentState 属性分类",
+          "level": "L1",
+          "completed": true,
+          "notes": "5可变(systemPrompt/model/thinkingLevel/tools/messages) + 4只读(isStreaming/streamingMessage/pendingToolCalls/errorMessage)"
+        },
+        "#2_AgentState_getter_setter": {
+          "name": "防御性拷贝",
+          "level": "L1",
+          "completed": true,
+          "notes": "闭包私有变量 + setter时slice()复制，允许原地修改但拒绝外部数组替换"
+        },
+        "#3_AgentTool_structure": {
+          "name": "AgentTool 结构",
+          "level": "L1",
+          "completed": true,
+          "notes": "继承Tool(name/description/parameters) + 新增(label/prepareArguments/execute/executionMode)"
+        },
+        "#4_AgentTool_execute_params": {
+          "name": "execute 参数",
+          "level": "L1",
+          "completed": true,
+          "notes": "toolCallId(事件关联)/params(验证后)/signal(取消)/onUpdate(进度回调)"
+        },
+        "#5_AgentLoopConfig_hooks": {
+          "name": "5个钩子",
+          "level": "L1",
+          "completed": true,
+          "notes": "beforeToolCall(阻止)/afterToolCall(覆写)/shouldStopAfterTurn/prepareNextTurn/transformContext"
+        },
+        "#6_ToolExecutionMode_parallel": {
+          "name": "parallel 执行细节",
+          "level": "L1",
+          "completed": true,
+          "notes": "预检顺序(prepareArgs+验证+beforeHook) → 执行并发 → 结果按原序排列"
+        },
+        "#7_ThinkingLevel_xhigh": {
+          "name": "xhigh 限制",
+          "level": "L1",
+          "completed": true,
+          "notes": "仅部分模型支持extended thinking，需检查model metadata"
+        }
+      }
     },
     "L03": {
       "status": "locked",
@@ -119,6 +165,13 @@
       "lesson": "L01",
       "concepts_covered": 5,
       "notes": "完成概念#1-#5，平均L1层级理解"
+    },
+    {
+      "date": "2026-06-03",
+      "action": "completed",
+      "lesson": "L02",
+      "concepts_covered": 7,
+      "notes": "AgentState/AgentTool/AgentLoopConfig/hooks/枚举类型，全L1"
     }
   ]
 }

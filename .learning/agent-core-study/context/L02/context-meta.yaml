@@ -1,0 +1,47 @@
+version: "1.0.0"
+lesson_id: "L02"
+title: "类型系统 (AgentState + AgentTool + 配置)"
+generated_at: "2026-06-03"
+method: "FastLearn"
+
+concepts:
+  - id: "#1_AgentState_mutable_readonly"
+    name: "AgentState 属性分类"
+    level: "L1"
+  - id: "#2_AgentState_getter_setter"
+    name: "防御性拷贝"
+    level: "L1"
+  - id: "#3_AgentTool_structure"
+    name: "AgentTool 结构"
+    level: "L1"
+  - id: "#4_AgentTool_execute_params"
+    name: "execute 参数"
+    level: "L1"
+  - id: "#5_AgentLoopConfig_hooks"
+    name: "5个钩子"
+    level: "L1"
+  - id: "#6_ToolExecutionMode_parallel"
+    name: "parallel 执行细节"
+    level: "L1"
+  - id: "#7_ThinkingLevel_xhigh"
+    name: "xhigh 限制"
+    level: "L1"
+
+source_files:
+  - path: "pi/agent/src/types.ts"
+    lines: "135-277, 284, 317-418"
+
+key_takeaways:
+  - "AgentState: 5可变 + 4只读，getter/setter 防御性拷贝"
+  - "AgentTool: 继承 Tool + execute 签名，空参数用 Type.Object({})"
+  - "afterToolCallResult: 字段级替换，无深度合并"
+  - "parallel: 预检顺序 → 执行并发 → 结果按原序"
+
+common_errors:
+  - "遗漏 parameters → TypeBox 验证失败"
+  - "prepareArguments 当验证器 → 实际是兼容性 shim"
+  - "afterToolCall 深度合并期望 → 手动展开"
+  - "xhigh 不检查模型 → 部分模型忽略/报错"
+
+next_lesson: "L03"
+next_title: "Agent Loop 底层机制"
