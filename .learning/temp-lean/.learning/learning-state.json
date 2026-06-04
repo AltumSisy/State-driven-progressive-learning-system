@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "project_name": "temp-lean-prompt-engineering",
+  "domain": "AI Agent Prompt 工程实践",
+  "source": "B站视频 - 为什么我不再相信「完美 Prompt」",
+  "current_phase": "phase1",
+  "phase_status": {
+    "phase1_mental_model": "pending",
+    "phase2_deep_reading": "pending",
+    "phase3_adversarial": "pending"
+  },
+  "started_at": "2026-05-01T15:10:00Z",
+  "lessons": {
+    "L01": {
+      "title": "完美 Prompt 的陷阱",
+      "status": "pending",
+      "fragility_points": [],
+      "mental_model_levels": {},
+      "review_schedule": []
+    },
+    "L02": {
+      "title": "日志系统设计原则",
+      "status": "pending",
+      "fragility_points": [],
+      "mental_model_levels": {},
+      "review_schedule": []
+    },
+    "L03": {
+      "title": "Prompt 编写原则",
+      "status": "pending",
+      "fragility_points": [],
+      "mental_model_levels": {},
+      "review_schedule": []
+    },
+    "L04": {
+      "title": "工程技巧与类比",
+      "status": "pending",
+      "fragility_points": [],
+      "mental_model_levels": {},
+      "review_schedule": []
+    }
+  },
+  "key_concepts": [
+    "日志系统完整性",
+    "怎么做 vs 不怎么做",
+    "执行步骤 vs 思维框架",
+    "工作流 vs Agent",
+    "KV cache 利用"
+  ],
+  "total_study_time_minutes": 0
+}
