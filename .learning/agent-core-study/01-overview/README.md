@@ -233,21 +233,78 @@ agent.state.messages.push({
 });
 ```
 
-### 2.5 Review - TODO清单
+### 2.5 Review - TODO清单 (渐进式披露)
 
-#### TODO-1: 理解概念网络 (🔴)
+> 📋 **渐进式学习**: 一次只显示一个TODO，完成后才解锁下一个。
+
+#### 🔴 TODO-1: 理解概念网络 (当前激活)
+
 **完成检查**:
 - [ ] 列举 pi-ai 提供给 agent 的 5 个以上核心类型
 - [ ] 画出 AgentMessage → Message 的转换流程
 
-#### TODO-2: 理解双层抽象 (🔴)
+<details>
+<summary>💡 提示</summary>
+
+pi-ai 提供的核心类型:
+- Model, Message, streamSimple
+- Tool, validateToolArguments
+- AssistantMessage, UserMessage, ToolResultMessage
+- TextContent, ImageContent
+
+转换流程: AgentMessage[] → convertToLlm → Message[] → LLM API
+</details>
+
+---
+
+#### 🟡 TODO-2: 理解双层抽象 (待解锁)
+
+**前置要求**: 完成 TODO-1
+
 **完成检查**:
 - [ ] 解释为什么需要 AgentMessage 和 Message 两层
 - [ ] 写出声明合并扩展语法
 
-#### TODO-3: 理解契约 (🟠)
+---
+
+#### 🟡 TODO-3: 理解契约 (待解锁)
+
+**前置要求**: 完成 TODO-2
+
 **完成检查**:
 - [ ] 解释 convertToLlm 不能抛异常的原因
+
+---
+
+## 📝 费曼检验 (必须完成)
+
+在继续下一课之前，请用自己的话解释：
+
+### 问题 1: 三层架构
+> "请解释 pi-ai → pi-agent-core → pi-coding-agent 三层各自职责，为什么需要分层？"
+
+你的解释：_______________________________________________
+
+### 问题 2: 双层抽象
+> "为什么需要 AgentMessage 和 Message 两层抽象？直接用一种消息格式有什么问题？"
+
+你的解释：_______________________________________________
+
+<details>
+<summary>✅ 检查你的理解</summary>
+
+**问题 1 参考答案**:
+- pi-ai: LLM Provider 抽象，不关心 Agent 逻辑
+- pi-agent-core: Agent 核心引擎，状态、事件、工具执行
+- pi-coding-agent: 完整应用，TUI、扩展、技能
+- 分层：每层只解决自己的问题，可复用、可测试、可维护
+
+**问题 2 参考答案**:
+- AgentMessage: 应用层可扩展（支持自定义消息类型）
+- Message: LLM 标准消息格式
+- 分离原因：应用需要灵活扩展，LLM 需要标准格式
+- 转换通过 convertToLlm 完成
+</details>
 
 ---
 

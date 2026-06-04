@@ -30,18 +30,21 @@ agent-core-study/
 ├── 01-overview/          # 架构概览 + pi/ai 依赖
 ├── 02-core-types/        # 类型系统 (types.ts + harness/types.ts)
 ├── 03-agent-loop/        # Agent Loop 底层机制
-├── 04-agent-class/       # Agent 类 (包装层)
+├── 04-agent-class/       # Agent 类 (包装层) ⭐ 新增
 ├── 05-tool-system/       # 工具执行完整流程
 ├── 06-event-flow/        # 事件系统
-├── 07-harness/           # Harness 基础
-├── 08-session/           # Session 管理 (原 08-examples)
-├── 09-compaction/        # 上下文压缩 (新增)
-├── 10-proxy/             # Proxy 与浏览器支持 (新增)
-├── 11-coding-agent/      # coding-agent 实例分析 (新增)
+├── 07-harness-base/      # Harness 基础
+├── 08-session/           # Session 管理
+├── 09-compaction/        # 上下文压缩
+├── 10-proxy/             # Proxy 与浏览器支持
+├── 11-coding-agent/      # coding-agent 实例分析
+├── skills/               # 学习方法 skill 文件 ⭐ 新增
+│   ├── method1-mental-model.skill.md
+│   ├── method2-sq3r.skill.md
+│   └── method3-adversarial-testing.skill.md
 ├── progress/             # 学习进度追踪
 │   ├── learning-syllabus.md
 │   ├── learning-state.json
-│   ├── memory-store.json
 │   ├── tracking.md
 │   └── interview-deep-dive.md
 ├── pi/                   # 源代码目录
@@ -50,6 +53,22 @@ agent-core-study/
 │   └── coding-agent/
 └── README.md             # 本文件
 ```
+
+## 课程设计原则
+
+基于 **Progressive Learning Coach** 准则，每课包含：
+
+1. **方法1**: 心智模型建构 - 建立正确的心智模型
+2. **方法2**: 结构化学习 (SQ3R) - Survey/Question/Read/Recite/Review
+3. **方法3**: 对抗测试 - 边界问题、反事实推理、漏洞注入
+4. **渐进式披露**: 一次只显示一个TODO，完成后解锁下一个
+5. **费曼检验**: 必须用自己的话复述核心概念
+
+## 学习方法技能
+
+- **[方法1: 心智模型建构](skills/method1-mental-model.skill.md)** - 建立专家级思维框架
+- **[方法2: 结构化学习 SQ3R](skills/method2-sq3r.skill.md)** - 系统化掌握知识
+- **[方法3: 对抗测试](skills/method3-adversarial-testing.skill.md)** - 暴露理解盲区
 
 ## 学习顺序调整
 

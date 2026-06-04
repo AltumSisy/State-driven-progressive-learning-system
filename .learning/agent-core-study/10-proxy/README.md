@@ -218,22 +218,86 @@ app.post("/api/stream", async (req, res) => {
 });
 ```
 
-### 2.5 Review - TODO清单
+### 2.5 Review - TODO清单 (渐进式披露)
 
-#### TODO-1: 掌握 streamProxy (🔴)
+> 📋 **渐进式学习**: 一次只显示一个TODO，完成后才解锁下一个。
+
+#### 🔴 TODO-1: 掌握 streamProxy (当前激活)
+
 **完成检查**:
 - [ ] 列举 streamProxy 的核心参数
 - [ ] 解释 proxyUrl 和 authToken 的作用
 
-#### TODO-2: 掌握后端实现 (🟠)
+<details>
+<summary>💡 提示</summary>
+
+核心参数:
+- model, context, options
+- proxyUrl: 代理服务器地址
+- authToken: 用户认证凭证
+
+authToken 传递到后端，用于获取真实 API Key
+</details>
+
+---
+
+#### 🟡 TODO-2: 掌握后端实现 (待解锁)
+
+**前置要求**: 完成 TODO-1
+
 **完成检查**:
 - [ ] 解释后端代理的认证流程
 - [ ] 解释 SSE 流式返回的实现
 
-#### TODO-3: 掌握环境差异 (🟠)
+---
+
+#### 🟡 TODO-3: 掌握环境差异 (待解锁)
+
+**前置要求**: 完成 TODO-2
+
 **完成检查**:
 - [ ] 解释浏览器与 Node.js 的关键差异
 - [ ] 解释 ExecutionEnv 的适配方案
+
+---
+
+## 📝 费曼检验 (必须完成)
+
+在继续下一课之前，请用自己的话解释：
+
+### 问题 1: Proxy 架构
+> "streamProxy 解决了什么问题？为什么浏览器不能直接调用 Anthropic API？"
+
+你的解释：_______________________________________________
+
+### 问题 2: 认证流程
+> "authToken 和真实 API Key 的关系是什么？为什么不在浏览器存 API Key？"
+
+你的解释：_______________________________________________
+
+### 问题 3: 流式保持
+> "代理如何保持流式体验？SSE 和一次性 JSON 返回有什么区别？"
+
+你的解释：_______________________________________________
+
+<details>
+<summary>✅ 检查你的理解</summary>
+
+**问题 1 参考答案**:
+- 解决 CORS 限制
+- 浏览器不能存 API Key（泄露风险）
+- 通过代理服务器中转请求
+
+**问题 2 参考答案**:
+- authToken: 用户凭证（可刷新）
+- API Key: 真实调用凭证（后端保管）
+- 后端用 authToken 验证身份，获取对应 API Key
+
+**问题 3 参考答案**:
+- SSE (Server-Sent Events): 流式推送
+- 代理将 Anthropic 的 SSE 转发给浏览器
+- 一次性 JSON: 等待完整响应，体验差
+</details>
 
 ---
 

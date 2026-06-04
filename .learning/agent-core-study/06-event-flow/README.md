@@ -190,27 +190,94 @@ const unsubscribe2 = agent.subscribe(listener2);
 unsubscribe1();
 ```
 
-### 2.5 Review - TODO清单
+### 2.5 Review - TODO清单 (渐进式披露)
 
-#### TODO-1: 掌握事件类型 (🔴)
+> 📋 **渐进式学习**: 一次只显示一个TODO，完成后才解锁下一个。
+
+#### 🔴 TODO-1: 掌握事件类型 (当前激活)
+
 **完成检查**:
 - [ ] 列举 10 种 AgentEvent 类型
 - [ ] 解释 Discriminated Union 的优势
 
-#### TODO-2: 掌握状态更新 (🔴)
+<details>
+<summary>💡 提示</summary>
+
+10 种事件:
+agent_start/end, turn_start/end
+message_start/update/end
+tool_execution_start/update/end
+</details>
+
+---
+
+#### 🟡 TODO-2: 掌握状态更新 (待解锁)
+
+**前置要求**: 完成 TODO-1
+
 **完成检查**:
 - [ ] 列举 message_end 时执行的两个状态更新
 - [ ] 解释 streamingMessage 的生命周期
 
-#### TODO-3: 掌握监听器机制 (🟠)
+---
+
+#### 🟡 TODO-3: 掌握监听器机制 (待解锁)
+
+**前置要求**: 完成 TODO-2
+
 **完成检查**:
 - [ ] 解释监听器抛异常时的处理
 - [ ] 解释 unsubscribe 的实现
 
-#### TODO-4: 掌握屏障行为 (🟠)
+---
+
+#### 🟡 TODO-4: 掌握屏障行为 (待解锁)
+
+**前置要求**: 完成 TODO-3
+
 **完成检查**:
 - [ ] 解释 agent_end 后 Agent 空闲的原因
 - [ ] 解释 waitForIdle 的等待机制
+
+---
+
+## 📝 费曼检验 (必须完成)
+
+在继续下一课之前，请用自己的话解释：
+
+### 问题 1: 事件序列
+> "一个完整的 prompt 调用会触发哪些事件？按顺序列举。"
+
+你的解释：_______________________________________________
+
+### 问题 2: 状态更新
+> "message_end 时发生了什么状态更新？streamingMessage 什么时候被清除？"
+
+你的解释：_______________________________________________
+
+### 问题 3: 屏障行为
+> "waitForIdle 如何保证所有监听器都已完成？监听器抛异常会怎样？"
+
+你的解释：_______________________________________________
+
+<details>
+<summary>✅ 检查你的理解</summary>
+
+**问题 1 参考答案**:
+- agent_start → turn_start → message_start(user) → message_end
+- message_start(assistant) → message_update* → message_end
+- [如有工具] tool_execution_start/update/end
+- turn_end → agent_end
+
+**问题 2 参考答案**:
+- message_end: streamingMessage = undefined, messages.push()
+- streamingMessage 在流结束时被清除
+
+**问题 3 参考答案**:
+- waitForIdle 等待 activeRun Promise
+- processEvents await 每个监听器
+- 监听器错误不影响其他监听器，但会被捕获
+</details>
 
 ---
 

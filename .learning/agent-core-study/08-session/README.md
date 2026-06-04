@@ -197,27 +197,93 @@ const messages = ancestry.map(node =>
 );
 ```
 
-### 2.5 Review - TODO清单
+### 2.5 Review - TODO清单 (渐进式披露)
 
-#### TODO-1: 掌握 SessionTree 结构 (🔴)
+> 📋 **渐进式学习**: 一次只显示一个TODO，完成后才解锁下一个。
+
+#### 🔴 TODO-1: 掌握 SessionTree 结构 (当前激活)
+
 **完成检查**:
 - [ ] 列举 SessionTreeNode 的 5 个字段
 - [ ] 解释 ancestry 链的作用
 
-#### TODO-2: 掌握 fork/merge (🔴)
+<details>
+<summary>💡 提示</summary>
+
+5 个字段:
+- id, parentId, childrenIds, entryId, createdAt
+
+ancestry: 从当前节点回溯到 root 的完整路径
+</details>
+
+---
+
+#### 🟡 TODO-2: 掌握 fork/merge (待解锁)
+
+**前置要求**: 完成 TODO-1
+
 **完成检查**:
 - [ ] 解释 fork 创建分支的过程
 - [ ] 解释 merge 合并分支的过程
 
-#### TODO-3: 掌握持久化 (🟠)
+---
+
+#### 🟡 TODO-3: 掌握持久化 (待解锁)
+
+**前置要求**: 完成 TODO-2
+
 **完成检查**:
 - [ ] 解释 saveSession 的序列化过程
 - [ ] 解释 loadSession 的重建过程
 
-#### TODO-4: 掌握 Entry 压缩 (🟠)
+---
+
+#### 🟡 TODO-4: 掌握 Entry 压缩 (待解锁)
+
+**前置要求**: 完成 TODO-3
+
 **完成检查**:
 - [ ] 解释 summary 字段的填充时机
 - [ ] 解释 originalMessages 的保留目的
+
+---
+
+## 📝 费曼检验 (必须完成)
+
+在继续下一课之前，请用自己的话解释：
+
+### 问题 1: SessionTree 结构
+> "SessionTree 和 SessionTreeNode 的关系是什么？entryId 指向什么？"
+
+你的解释：_______________________________________________
+
+### 问题 2: fork/merge
+> "fork 后不切换会发生什么？merge 的前提条件是什么？"
+
+你的解释：_______________________________________________
+
+### 问题 3: 持久化
+> "saveSession 保存了什么？loadSession 如何重建 SessionTree？"
+
+你的解释：_______________________________________________
+
+<details>
+<summary>✅ 检查你的理解</summary>
+
+**问题 1 参考答案**:
+- SessionTree 包含所有节点和 rootId
+- SessionTreeNode 表示单个节点
+- entryId 指向 SessionTreeEntry（消息内容）
+
+**问题 2 参考答案**:
+- fork 后不切换：新分支空闲，继续在原分支
+- merge 前提：source 和 target 有共同祖先
+- merge 创建新节点，整合两个分支
+
+**问题 3 参考答案**:
+- saveSession: 序列化 tree、entries、metadata 到 JSONL
+- loadSession: 从文件读取，重建 SessionTree 和 entries
+</details>
 
 ---
 

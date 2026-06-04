@@ -224,33 +224,105 @@ const agent = new Agent({
 });
 ```
 
-### 2.5 Review - TODO清单
+### 2.5 Review - TODO清单 (渐进式披露)
 
-#### TODO-1: 掌握 AgentTool 结构 (🔴)
+> 📋 **渐进式学习**: 一次只显示一个TODO，完成后才解锁下一个。
+
+#### 🔴 TODO-1: 掌握 AgentTool 结构 (当前激活)
+
 **完成检查**:
 - [ ] 列举继承自 Tool 的 3 个字段
 - [ ] 列举新增的 4 个字段
 - [ ] 解释 execute 的 4 个参数
 
-#### TODO-2: 掌握参数验证 (🔴)
+<details>
+<summary>💡 提示</summary>
+
+继承: name, description, parameters
+新增: label, prepareArguments, execute, executionMode
+
+execute 参数: toolCallId, params, signal, onUpdate
+</details>
+
+---
+
+#### 🟡 TODO-2: 掌握参数验证 (待解锁)
+
+**前置要求**: 完成 TODO-1
+
 **完成检查**:
 - [ ] 解释 prepareArguments 和 validateToolArguments 的区别
 - [ ] 解释 validateToolArguments 失败时的处理
 
-#### TODO-3: 掌握钩子机制 (🔴)
+---
+
+#### 🟡 TODO-3: 掌握钩子机制 (待解锁)
+
+**前置要求**: 完成 TODO-2
+
 **完成检查**:
 - [ ] 解释 beforeToolCall 的 block 效果
 - [ ] 解释 afterToolCall 的合并语义
 
-#### TODO-4: 掌握并行执行 (🟠)
+---
+
+#### 🟡 TODO-4: 掌握并行执行 (待解锁)
+
+**前置要求**: 完成 TODO-3
+
 **完成检查**:
 - [ ] 列举三阶段
 - [ ] 解释事件顺序差异
 
-#### TODO-5: 掌握 terminate (🟠)
+---
+
+#### 🟡 TODO-5: 掌握 terminate (待解锁)
+
+**前置要求**: 完成 TODO-4
+
 **完成检查**:
 - [ ] 解释触发条件
 - [ ] 列举两个设置位置
+
+---
+
+## 📝 费曼检验 (必须完成)
+
+在继续下一课之前，请用自己的话解释：
+
+### 问题 1: 工具结构
+> "AgentTool.execute 的 4 个参数各是什么作用？"
+
+你的解释：_______________________________________________
+
+### 问题 2: 钩子机制
+> "beforeToolCall 返回 block: true 会发生什么？afterToolCall 如何修改结果？"
+
+你的解释：_______________________________________________
+
+### 问题 3: 执行模式
+> "并行和顺序执行有什么区别？混合批会怎样处理？"
+
+你的解释：_______________________________________________
+
+<details>
+<summary>✅ 检查你的理解</summary>
+
+**问题 1 参考答案**:
+- toolCallId: 工具调用唯一标识
+- params: 验证后的参数
+- signal: 中止信号
+- onUpdate: 流式进度回调
+
+**问题 2 参考答案**:
+- beforeToolCall block: 跳过执行，直接返回错误
+- afterToolCall: 合并 result，整字段替换（非深度合并）
+
+**问题 3 参考答案**:
+- 并行: 预检顺序，执行并发
+- 顺序: 全部顺序执行
+- 混合批: 一个 sequential → 全部 sequential
+</details>
 
 ---
 

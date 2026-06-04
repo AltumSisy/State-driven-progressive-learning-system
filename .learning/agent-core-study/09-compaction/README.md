@@ -244,27 +244,99 @@ if (preparation.value) {
 }
 ```
 
-### 2.5 Review - TODO清单
+### 2.5 Review - TODO清单 (渐进式披露)
 
-#### TODO-1: 掌握压缩流程 (🔴)
+> 📋 **渐进式学习**: 一次只显示一个TODO，完成后才解锁下一个。
+
+#### 🔴 TODO-1: 掌握压缩流程 (当前激活)
+
 **完成检查**:
 - [ ] 列举 compact 的完整流程步骤
 - [ ] 解释 threshold 和 reserveTokens 的作用
 
-#### TODO-2: 掌握切割策略 (🔴)
+<details>
+<summary>💡 提示</summary>
+
+流程:
+1. 检查 Token 是否超限
+2. 计算切割点
+3. 生成摘要
+4. 创建 Entry（带 summary）
+5. 替换原始消息
+
+threshold: Token 阈值，触发压缩
+reserveTokens: 保留 Token，保证最近对话
+</details>
+
+---
+
+#### 🟡 TODO-2: 掌握切割策略 (待解锁)
+
+**前置要求**: 完成 TODO-1
+
 **完成检查**:
 - [ ] 解释 estimateTokens 和 calculateContextTokens 的区别
 - [ ] 解释 findTurnStartIndex 的作用
 
-#### TODO-3: 掌握摘要生成 (🟠)
+---
+
+#### 🟡 TODO-3: 掌握摘要生成 (待解锁)
+
+**前置要求**: 完成 TODO-2
+
 **完成检查**:
 - [ ] 解释 summaryModel 的选择逻辑
 - [ ] 解释 customInstructions 的作用
 
-#### TODO-4: 掌握 Entry 结构 (🟠)
+---
+
+#### 🟡 TODO-4: 掌握 Entry 结构 (待解锁)
+
+**前置要求**: 完成 TODO-3
+
 **完成检查**:
 - [ ] 解释 summary 和 originalMessages 的关系
 - [ ] 解释 Entry 压缩后的重建过程
+
+---
+
+## 📝 费曼检验 (必须完成)
+
+在继续下一课之前，请用自己的话解释：
+
+### 问题 1: 压缩触发
+> "什么时候触发压缩？threshold 和 reserveTokens 如何配合？"
+
+你的解释：_______________________________________________
+
+### 问题 2: 切割策略
+> "为什么要找到 Turn 边界切割？findTurnStartIndex 做什么？"
+
+你的解释：_______________________________________________
+
+### 问题 3: 摘要保留
+> "为什么要保留 originalMessages？summary 和原文的关系是什么？"
+
+你的解释：_______________________________________________
+
+<details>
+<summary>✅ 检查你的理解</summary>
+
+**问题 1 参考答案**:
+- 当 calculateContextTokens > threshold 时触发
+- reserveTokens: 保证保留最近对话的 Token 数
+- 切割后应 <= threshold - reserveTokens
+
+**问题 2 参考答案**:
+- Turn 边界切割保证 user/assistant 对的完整性
+- findTurnStartIndex: 回溯到当前 Turn 的开始位置
+- 防止切割在消息中间，破坏对话逻辑
+
+**问题 3 参考答案**:
+- originalMessages 保留原文，用于追溯
+- summary 是压缩后的摘要
+- 压缩不丢失，可查看原文
+</details>
 
 ---
 

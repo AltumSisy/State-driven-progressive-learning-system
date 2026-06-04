@@ -3,6 +3,7 @@
   "learning_state": {
     "domain": "agent-core-study",
     "current_lesson": "L02",
+    "current_lesson": "L02",
     "global_status": "active",
     "started_at": "2026-05-22T14:30:00",
     "last_session": "2026-06-03T00:00:00",
@@ -12,9 +13,11 @@
   "syllabus_progress": {
     "L01": {
       "status": "completed",
+      "status": "completed",
       "title": "架构概览 + pi/ai 依赖",
       "todos_total": 3,
       "todos_completed": 3,
+      "completion_date": "2026-06-04",
       "concepts_progress": {
         "#1_agentLoop_Agent_AgentHarness": {
           "name": "三层架构",
@@ -50,19 +53,19 @@
           "name": "配置入口",
           "level": "L1",
           "completed": true,
-          "notes": "L01暂不深入，后续课程会详细讲解"
+          "notes": "核心配置：convertToLlm(转换契约)、transformContext(上下文变换)、hooks(before/afterToolCall)、queues(getSteeringMessages/getFollowUpMessages)、执行控制(shouldStopAfterTurn/prepareNextTurn)"
         },
         "#7_CustomAgentMessages": {
           "name": "声明合并扩展",
           "level": "L1",
           "completed": true,
-          "notes": "通过声明合并扩展CustomAgentMessages接口添加自定义消息类型"
+          "notes": "通过declare module扩展CustomAgentMessages接口，AgentMessage = Message | CustomAgentMessages[keyof CustomAgentMessages]"
         },
         "#8_pi-ai基础类型": {
           "name": "外部依赖",
           "level": "L1",
           "completed": true,
-          "notes": "Message, Model, Tool, AssistantMessageEvent等来自pi-ai"
+          "notes": "pi-ai提供：Model(模型抽象)、Message(标准消息)、streamSimple(流式调用)、Tool(工具基类)、AssistantMessage/UserMessage/ToolResultMessage、TextContent/ImageContent"
         }
       }
     },

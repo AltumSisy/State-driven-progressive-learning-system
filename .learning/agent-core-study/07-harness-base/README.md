@@ -268,27 +268,100 @@ const mySkill: Skill = {
 harness.registerSkill(mySkill);
 ```
 
-### 2.5 Review - TODO清单
+### 2.5 Review - TODO清单 (渐进式披露)
 
-#### TODO-1: 掌握 Harness 结构 (🔴)
+> 📋 **渐进式学习**: 一次只显示一个TODO，完成后才解锁下一个。
+
+#### 🔴 TODO-1: 掌握 Harness 结构 (当前激活)
+
 **完成检查**:
 - [ ] 列举 AgentHarness 的 5 个核心组件
 - [ ] 解释 Harness 与 Agent 的关系
 
-#### TODO-2: 掌握 Session 管理 (🔴)
+<details>
+<summary>💡 提示</summary>
+
+5 个组件:
+- agent (内嵌 Agent)
+- session (会话管理)
+- skills (技能注册表)
+- executionEnv (执行环境)
+- compactionSettings (压缩配置)
+
+Harness = Agent + Session + Skills + ExecutionEnv + Compaction
+</details>
+
+---
+
+#### 🟡 TODO-2: 掌握 Session 管理 (待解锁)
+
+**前置要求**: 完成 TODO-1
+
 **完成检查**:
 - [ ] 解释 SessionTree 的树形结构
 - [ ] 解释 fork/merge 的操作
 
-#### TODO-3: 掌握 Skills 系统 (🟠)
+---
+
+#### 🟡 TODO-3: 掌握 Skills 系统 (待解锁)
+
+**前置要求**: 完成 TODO-2
+
 **完成检查**:
 - [ ] 列举 Skill 的 5 个字段
 - [ ] 解释 SkillMatcher 的三种类型
 
-#### TODO-4: 掌握 Compaction (🟠)
+---
+
+#### 🟡 TODO-4: 掌握 Compaction (待解锁)
+
+**前置要求**: 完成 TODO-3
+
 **完成检查**:
 - [ ] 解释 threshold 和 reserveTokens 的作用
 - [ ] 解释切割点选择策略
+
+---
+
+## 📝 费曼检验 (必须完成)
+
+在继续下一课之前，请用自己的话解释：
+
+### 问题 1: Harness 结构
+> "AgentHarness 相比 Agent 类多了哪些能力？为什么要分离 Session/Skills/ExecutionEnv？"
+
+你的解释：_______________________________________________
+
+### 问题 2: SessionTree
+> "SessionTree 的树形结构如何支持分支和合并？fork 和 merge 分别做什么？"
+
+你的解释：_______________________________________________
+
+### 问题 3: Skills 系统
+> "Skill 的 matchers 如何工作？regex/keyword/llm 三种匹配类型有什么区别？"
+
+你的解释：_______________________________________________
+
+<details>
+<summary>✅ 检查你的理解</summary>
+
+**问题 1 参考答案**:
+- Harness 增加了: Session 持久化、Skills 管理、ExecutionEnv 抽象、Compaction
+- 分离职责：Agent 负责核心循环，Harness 负责应用框架
+- 可独立使用 Agent，也可使用完整的 Harness
+
+**问题 2 参考答案**:
+- SessionTree: root → node → children 的树形结构
+- fork: 从当前节点创建新分支
+- merge: 将 source 分支合并到 target
+- 支持探索不同方案，保留完整历史
+
+**问题 3 参考答案**:
+- matchers 决定何时触发 Skill
+- regex: 正则匹配，精确控制
+- keyword: 关键词匹配，简单快速
+- llm: LLM 判断，语义理解
+</details>
 
 ---
 

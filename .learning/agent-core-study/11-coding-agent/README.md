@@ -290,27 +290,104 @@ const executeStepTool: AgentTool = {
 };
 ```
 
-### 2.5 Review - TODO清单
+### 2.5 Review - TODO清单 (渐进式披露)
 
-#### TODO-1: 分析 handoff (🟠)
+> 📋 **渐进式学习**: 一次只显示一个TODO，完成后才解锁下一个。
+
+#### 🔴 TODO-1: 分析 handoff (当前激活)
+
 **完成检查**:
 - [ ] 阅读 handoff.ts 理解上下文传递
 - [ ] 解释 Agent As Tool 模式
 
-#### TODO-2: 分析 permission-gate (🟠)
+<details>
+<summary>💡 提示</summary>
+
+Agent As Tool: Master Agent → handoff_tool → Worker Agent → Result
+
+上下文传递: serializeContext → Worker → deserialize
+</details>
+
+---
+
+#### 🟡 TODO-2: 分析 permission-gate (待解锁)
+
+**前置要求**: 完成 TODO-1
+
 **完成检查**:
 - [ ] 阅读 permission-gate.ts 理解 HITL 模式
 - [ ] 解释 beforeToolCall block 机制
 
-#### TODO-3: 分析 plan-mode (🟠)
+---
+
+#### 🟡 TODO-3: 分析 plan-mode (待解锁)
+
+**前置要求**: 完成 TODO-2
+
 **完成检查**:
 - [ ] 阅读 plan-mode/ 理解 PlanAct 模式
 - [ ] 解释 create_plan → execute_step → verify_step 流程
 
-#### TODO-4: 分析其他实例 (🟡)
+---
+
+#### 🟡 TODO-4: 分析其他实例 (待解锁)
+
+**前置要求**: 完成 TODO-3
+
 **完成检查**:
 - [ ] 阅读 custom-provider 理解扩展性
 - [ ] 阅读 git-checkpoint 理解状态保存
+
+---
+
+## 📝 费曼检验 (必须完成)
+
+在结束本课程之前，请用自己的话解释：
+
+### 问题 1: Handoff 模式
+> "Agent As Tool 模式解决了什么问题？Master 和 Worker 如何协作？"
+
+你的解释：_______________________________________________
+
+### 问题 2: HITL 模式
+> "permission-gate 如何实现人工介入？beforeToolCall 返回 block 会怎样？"
+
+你的解释：_______________________________________________
+
+### 问题 3: PlanAct 模式
+> "create_plan → execute_step → verify_step 的流程是什么？为什么结构化执行更好？"
+
+你的解释：_______________________________________________
+
+### 问题 4: 扩展性
+> "如何通过 custom-provider 扩展？git-checkpoint 在什么时候触发？"
+
+你的解释：_______________________________________________
+
+<details>
+<summary>✅ 检查你的理解</summary>
+
+**问题 1 参考答案**:
+- 解决复杂任务分工问题
+- Master 决策，Worker 执行
+- 上下文传递保持状态连续
+
+**问题 2 参考答案**:
+- beforeToolCall 检查风险操作
+- block: true 阻止执行，返回错误
+- 等待用户确认后再放行
+
+**问题 3 参考答案**:
+- create_plan: 生成任务计划
+- execute_step: 执行单个步骤
+- verify_step: 验证执行结果
+- 结构化：可追踪、可恢复、可验证
+
+**问题 4 参考答案**:
+- custom-provider: 注册自定义模型
+- git-checkpoint: 在工具调用后触发
+- 用于状态回滚和调试追踪
+</details>
 
 ---
 

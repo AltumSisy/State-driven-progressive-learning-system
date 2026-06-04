@@ -204,29 +204,93 @@ agent.state.tools.push(tool3);         // 直接修改
 agent.state.messages.push(newMessage); // 直接修改
 ```
 
-### 2.5 Review - TODO清单
+### 2.5 Review - TODO清单 (渐进式披露)
 
-#### TODO-1: 掌握核心类型结构 (🔴)
+> 📋 **渐进式学习**: 一次只显示一个TODO，完成后才解锁下一个。
+
+#### 🔴 TODO-1: 掌握核心类型结构 (当前激活)
+
 **完成检查**:
 - [ ] 列举 AgentState 的 5 个可变属性和 4 个只读属性
 - [ ] 解释 getter/setter 复制机制
 
-#### TODO-2: 掌握 AgentTool (🔴)
+<details>
+<summary>💡 提示</summary>
+
+可变属性: systemPrompt, model, thinkingLevel, tools, messages
+只读属性: isStreaming, streamingMessage, pendingToolCalls, errorMessage
+
+getter/setter: setter 使用 slice() 复制数组，防止外部污染
+</details>
+
+---
+
+#### 🟡 TODO-2: 掌握 AgentTool (待解锁)
+
+**前置要求**: 完成 TODO-1
+
 **完成检查**:
 - [ ] 列举继承自 Tool 的 3 个字段
 - [ ] 列举 agent-core 新增的 4 个字段
 - [ ] 解释 execute 的 4 个参数含义
 
-#### TODO-3: 掌握 AgentLoopConfig (🟠)
+---
+
+#### 🟡 TODO-3: 掌握 AgentLoopConfig (待解锁)
+
+**前置要求**: 完成 TODO-2
+
 **完成检查**:
 - [ ] 列举必需配置项 (model, convertToLlm)
 - [ ] 列举可选配置项中的 5 个钩子
 
-#### TODO-4: 掌握枚举类型 (🟠)
+---
+
+#### 🟡 TODO-4: 掌握枚举类型 (待解锁)
+
+**前置要求**: 完成 TODO-3
+
 **完成检查**:
 - [ ] 列举 ToolExecutionMode 两种模式
 - [ ] 列举 QueueMode 两种模式
 - [ ] 列举 ThinkingLevel 6 个级别
+
+---
+
+## 📝 费曼检验 (必须完成)
+
+在继续下一课之前，请用自己的话解释：
+
+### 问题 1: Getter/Setter 复制
+> "为什么 tools/messages 的 setter 要复制数组？直接返回引用有什么问题？"
+
+你的解释：_______________________________________________
+
+### 问题 2: AgentTool 结构
+> "AgentTool 比 Tool 多了哪些字段？它们各有什么作用？"
+
+你的解释：_______________________________________________
+
+### 问题 3: Discriminated Union
+> "AgentEvent 为什么使用 Discriminated Union？有什么好处？"
+
+你的解释：_______________________________________________
+
+<details>
+<summary>✅ 检查你的理解</summary>
+
+**问题 1 参考答案**:
+- setter 复制防止外部修改影响内部状态
+- 允许两种用法: setter 赋值（安全）和直接 push（快速）
+
+**问题 2 参考答案**:
+- 新增: label（UI显示）, prepareArguments（参数预处理）
+- execute（执行函数）, executionMode（执行模式覆盖）
+
+**问题 3 参考答案**:
+- 通过 type 字段自动推断其他字段类型
+- switch 语句有完整性检查，防止遗漏事件类型
+</details>
 
 ---
 
