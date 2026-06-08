@@ -3,16 +3,14 @@
   "learning_state": {
     "domain": "agent-core-study",
     "current_lesson": "L02",
-    "current_lesson": "L02",
     "global_status": "active",
     "started_at": "2026-05-22T14:30:00",
-    "last_session": "2026-06-03T00:00:00",
-    "total_study_time_minutes": 45,
+    "last_session": "2026-06-04T00:00:00",
+    "total_study_time_minutes": 90,
     "method": "FastLearn"
   },
   "syllabus_progress": {
     "L01": {
-      "status": "completed",
       "status": "completed",
       "title": "架构概览 + pi/ai 依赖",
       "todos_total": 3,
@@ -71,57 +69,92 @@
     },
     "L02": {
       "status": "completed",
-      "title": "类型系统 (合并)",
+      "title": "类型系统完整解析",
       "todos_total": 4,
       "todos_completed": 4,
+      "completion_date": "2026-06-04",
       "concepts_progress": {
-        "#1_AgentState_mutable_readonly": {
-          "name": "AgentState 属性分类",
-          "level": "L1",
+        "#1_AgentState_three_blocks": {
+          "name": "AgentState 三块记忆法",
+          "level": "L2",
           "completed": true,
-          "notes": "5可变(systemPrompt/model/thinkingLevel/tools/messages) + 4只读(isStreaming/streamingMessage/pendingToolCalls/errorMessage)"
+          "notes": "配置(systemPrompt/model/thinkingLevel) + 对话内容(tools/messages) + 运行状态(4个只读)，口诀：配置、对话、运行中，三块记住不头痛"
         },
-        "#2_AgentState_getter_setter": {
-          "name": "防御性拷贝",
-          "level": "L1",
+        "#2_AgentState_shallow_copy": {
+          "name": "浅拷贝设计意图",
+          "level": "L2",
           "completed": true,
-          "notes": "闭包私有变量 + setter时slice()复制，允许原地修改但拒绝外部数组替换"
+          "notes": "精准防御：只防御数组替换，允许共享对象变更。外部修改工具属性→Agent同步感知；外部push→Agent不受影响；深拷贝会导致状态分裂Bug"
         },
-        "#3_AgentTool_structure": {
-          "name": "AgentTool 结构",
-          "level": "L1",
+        "#3_AgentState_readonly_props": {
+          "name": "只读属性框架维护时机",
+          "level": "L2",
           "completed": true,
-          "notes": "继承Tool(name/description/parameters) + 新增(label/prepareArguments/execute/executionMode)"
+          "notes": "isStreaming(LLM调用开始→true，agent_end监听器完成→false)，pendingToolCalls(工具开始→add，结束→remove)，streamingMessage/errorMessage框架实时更新"
         },
-        "#4_AgentTool_execute_params": {
-          "name": "execute 参数",
-          "level": "L1",
+        "#4_AgentTool_five_elements": {
+          "name": "AgentTool 五要素法",
+          "level": "L2",
           "completed": true,
-          "notes": "toolCallId(事件关联)/params(验证后)/signal(取消)/onUpdate(进度回调)"
+          "notes": "继承Tool(name/description/parameters) + 新增(label/prepareArguments/execute/executionMode)，口诀：名标预执模，干活传四宝"
         },
-        "#5_AgentLoopConfig_hooks": {
-          "name": "5个钩子",
-          "level": "L1",
+        "#5_AgentTool_execute_params": {
+          "name": "execute 四参数详解",
+          "level": "L2",
           "completed": true,
-          "notes": "beforeToolCall(阻止)/afterToolCall(覆写)/shouldStopAfterTurn/prepareNextTurn/transformContext"
+          "notes": "toolCallId(事件关联/取消关联) + params(TypeBox验证后类型安全) + signal(AbortSignal取消信号) + onUpdate(进度回调/流式中间结果)"
         },
-        "#6_ToolExecutionMode_parallel": {
-          "name": "parallel 执行细节",
-          "level": "L1",
+        "#6_AgentTool_generic_params": {
+          "name": "泛型参数化含义",
+          "level": "L2",
           "completed": true,
-          "notes": "预检顺序(prepareArgs+验证+beforeHook) → 执行并发 → 结果按原序排列"
+          "notes": "TParameters extends TSchema(参数必须能被JSON Schema描述) = TSchema(默认) + TDetails = any(返回详情类型)，指定后params自动获得正确类型"
         },
-        "#7_ThinkingLevel_xhigh": {
+        "#7_AgentTool_prepareArguments_vs_schema": {
+          "name": "prepareArguments vs schema验证",
+          "level": "L2",
+          "completed": true,
+          "notes": "prepareArguments是兼容性shim(阶段1，容错预处理，处理模型传参不标准) → TypeBox schema是正式验证(阶段2，确保参数符合定义)"
+        },
+        "#8_AgentLoopConfig_eight_hooks": {
+          "name": "八大钩子记忆法",
+          "level": "L2",
+          "completed": true,
+          "notes": "翻译官(convertToLlm) + 整理官(transformContext) + 钥匙官(getApiKey) + 拦截官(beforeToolCall) + 修改官(afterToolCall) + 刹车官(shouldStopAfterTurn) + 调参官(prepareNextTurn) + 方向盘(getSteeringMessages) + 加餐官(getFollowUpMessages)"
+        },
+        "#9_AgentLoopConfig_afterToolCallResult": {
+          "name": "afterToolCallResult 字段级替换",
+          "level": "L2",
+          "completed": true,
+          "notes": "返回字段完全替换原字段，无深度合并。需手动展开: { ...result.details, audited: true }，遗漏会丢失原值"
+        },
+        "#10_ToolExecutionMode_parallel_flow": {
+          "name": "parallel 执行三阶段",
+          "level": "L2",
+          "completed": true,
+          "notes": "预检阶段(顺序: prepareArguments→schema验证→beforeToolCall) → 执行阶段(并发: execute同时运行) → 结果阶段(tool_execution_end按完成顺序，ToolResult消息按assistant原序)"
+        },
+        "#11_ThinkingLevel_xhigh_limitation": {
           "name": "xhigh 限制",
-          "level": "L1",
+          "level": "L2",
           "completed": true,
-          "notes": "仅部分模型支持extended thinking，需检查model metadata"
+          "notes": "仅部分模型支持extended thinking，需检查model.metadata，否则可能忽略或报错。6级：off→minimal→low→medium→high→xhigh"
+        },
+        "#12_three_concepts_relation": {
+          "name": "三者关系",
+          "level": "L2",
+          "completed": true,
+          "notes": "State=这一刻的'是什么'(运行时变化)，Tool=技能卡(放在State.tools数组)，LoopConfig=工作流程规则书(创建时传入，通常不变)"
         }
       }
     },
     "L03": {
-      "status": "locked",
-      "title": "Agent Loop 底层机制"
+      "status": "active",
+      "title": "Agent Loop 底层机制",
+      "todos_total": 3,
+      "todos_completed": 0,
+      "started_at": "2026-06-05",
+      "concepts_progress": {}
     },
     "L04": {
       "status": "locked",
@@ -175,6 +208,13 @@
       "lesson": "L02",
       "concepts_covered": 7,
       "notes": "AgentState/AgentTool/AgentLoopConfig/hooks/枚举类型，全L1"
+    },
+    {
+      "date": "2026-06-04",
+      "action": "deep_update",
+      "lesson": "L02",
+      "concepts_covered": 12,
+      "notes": "基于AgentState.md深度解析，升级至L2层级：三块记忆法、浅拷贝设计意图、五要素法、八大钩子记忆法、parallel三阶段、三者关系"
     }
   ]
 }

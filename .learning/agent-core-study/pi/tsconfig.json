@@ -1,0 +1,20 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"paths": {
+			"*": ["./*"],
+			"@earendil-works/pi-ai": ["./ai/src/index.ts"],
+			"@earendil-works/pi-ai/oauth": ["./ai/src/oauth.ts"],
+			"@earendil-works/pi-ai/*": ["./ai/src/*.ts", "./ai/src/providers/*.ts"],
+			"@earendil-works/pi-ai/dist/*": ["./ai/src/*"],
+			"@earendil-works/pi-agent-core": ["./agent/src/index.ts"],
+			"@earendil-works/pi-agent-core/*": ["./agent/src/*"],
+			"@earendil-works/pi-coding-agent": ["./coding-agent/src/index.ts"],
+			"@earendil-works/pi-coding-agent/hooks": ["./coding-agent/src/core/hooks/index.ts"],
+			"@earendil-works/pi-coding-agent/*": ["./coding-agent/src/*"]
+		}
+	},
+	"include": ["*/src/**/*", "*/test/**/*", "coding-agent/examples/**/*"],
+	"exclude": ["**/dist/**"]
+}
