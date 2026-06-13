@@ -1,0 +1,236 @@
+{
+  "main": {
+    "id": "fa384dd03a10887e",
+    "type": "split",
+    "children": [
+      {
+        "id": "039c860e646378d0",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "523b2865b8c69ac5",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "02-core-types/README.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "README"
+            }
+          },
+          {
+            "id": "ecc073b1f2399969",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "02-core-types/AgentLoopConfig.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "AgentLoopConfig"
+            }
+          },
+          {
+            "id": "2395b69db00e830e",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "03-agent-loop/tool-call-design-analysis.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "tool-call-design-analysis"
+            }
+          }
+        ],
+        "currentTab": 2
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "b7689d1707cfbf0d",
+    "type": "split",
+    "children": [
+      {
+        "id": "d149944bac2e7427",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "cfff9074f1d13da9",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "1766fac12dbfaa7a",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "ddbbd465427d24b8",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200
+  },
+  "right": {
+    "id": "fc273c53f646097f",
+    "type": "split",
+    "children": [
+      {
+        "id": "0bd94f6e597f03fe",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ff948f8eb2a5132b",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "03-agent-loop/tool-call-design-analysis.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "tool-call-design-analysis 的反向链接列表"
+            }
+          },
+          {
+            "id": "cbf4fb89d898edda",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "03-agent-loop/tool-call-design-analysis.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "tool-call-design-analysis 的出链列表"
+            }
+          },
+          {
+            "id": "8e11ac89f0a88746",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "2095824353d0d308",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "7af5f834fe465c99",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "03-agent-loop/tool-call-design-analysis.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "tool-call-design-analysis 的大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false
+    }
+  },
+  "active": "2395b69db00e830e",
+  "lastOpenFiles": [
+    "03-agent-loop/essential-problems-and-principles.md",
+    "03-agent-loop/essential-problems-and-principles.md.tmp.13584.2afcf9cc8cda",
+    "03-agent-loop/event-order-analysis.md",
+    "03-agent-loop/event-order-analysis.md.tmp.13584.9f2ce53e0515",
+    "02-core-types/AgentLoopConfig.md",
+    "03-agent-loop/tool-call-design-analysis.md",
+    "03-agent-loop/tool-call-design-analysis.md.tmp.13584.0dc9bbe1a258",
+    "Agent-Loop 停止.md",
+    "02-core-types/AgentState.md",
+    "02-core-types/AgentTool.md",
+    "02-core-types/AgentLoopConfig.md.tmp.13584.67d8b3e54ab0",
+    "02-core-types/README.md",
+    "未命名",
+    "03-agent-loop/agent-loop-learning-guide.md",
+    "01-overview/README.md",
+    "03-agent-loop/Agent Loop 核心机制.md",
+    "03-agent-loop/统一多提供商 LLM API 设计详解.md",
+    "03-agent-loop/loop与agent在统一多提供商 LLM API 设计中的角色分析.md"
+  ]
+}
