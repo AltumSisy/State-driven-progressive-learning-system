@@ -41,12 +41,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "03-agent-loop/tool-call-design-analysis.md",
+                "file": "03-agent-loop/Agent Loop 核心机制.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "tool-call-design-analysis"
+              "title": "Agent Loop 核心机制"
             }
           }
         ],
@@ -214,12 +214,16 @@
   },
   "active": "2395b69db00e830e",
   "lastOpenFiles": [
+    "03-agent-loop/loop与agent.问题驱动的架构设计分析.md",
+    "03-agent-loop/AgentLoop 工具调用的本质问题与核心原则.md",
+    "03-agent-loop/Agent Loop 核心学习文档.md",
+    "03-agent-loop/AgentLoop 工具调用的设计问题与解决方案.md",
+    "03-agent-loop/tool-call-design-analysis.md",
     "03-agent-loop/essential-problems-and-principles.md",
     "03-agent-loop/essential-problems-and-principles.md.tmp.13584.2afcf9cc8cda",
     "03-agent-loop/event-order-analysis.md",
     "03-agent-loop/event-order-analysis.md.tmp.13584.9f2ce53e0515",
     "02-core-types/AgentLoopConfig.md",
-    "03-agent-loop/tool-call-design-analysis.md",
     "03-agent-loop/tool-call-design-analysis.md.tmp.13584.0dc9bbe1a258",
     "Agent-Loop 停止.md",
     "02-core-types/AgentState.md",
