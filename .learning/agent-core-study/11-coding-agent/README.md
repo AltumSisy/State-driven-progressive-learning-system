@@ -514,8 +514,6 @@ Query → Plan → Execute Steps → Verify → Answer
 
 ---
 
-## 源文件映射
-
 | 内容 | 源文件 |
 |------|--------|
 | handoff.ts | `pi/coding-agent/examples/extensions/handoff.ts` |
@@ -523,3 +521,90 @@ Query → Plan → Execute Steps → Verify → Answer
 | plan-mode/ | `pi/coding-agent/examples/extensions/plan-mode/` |
 | custom-provider/ | `pi/coding-agent/examples/extensions/custom-provider-anthropic/` |
 | git-checkpoint.ts | `pi/coding-agent/examples/extensions/git-checkpoint.ts` |
+
+---
+
+## 🎯 Core 模块学习路径（新增）
+
+基于 coding-agent 的 src/core 目录，建立了系统化的学习路径。
+
+### 📚 文件夹结构
+
+```
+11-coding-agent/
+├── 00-总体架构概览          - 整体架构设计和学习路径
+├── 01-AgentSession核心      - 会话核心抽象（最重要）
+├── 02-会话管理              - 会话持久化和分支管理
+├── 03-工具定义与执行         - 7个核心工具的实现
+├── 04-工具高级机制           - 工具包装、队列、截断等
+├── 05-扩展加载与运行         - 扩展系统架构
+├── 06-压缩系统              - 上下文压缩机制
+├── 07-模型注册系统           - 模型发现和认证
+├── 08-设置管理              - 配置持久化
+├── 09-系统提示词构建         - 提示词、技能、模板
+├── 10-资源加载              - 资源发现和管理
+├── 11-事件系统              - 事件总线机制
+├── 12-HTTP通信              - HTTP请求和输出保护
+├── 13-执行与诊断             - Bash执行和性能计时
+└── 14-其他重要文件           - 键盘绑定、遥测、导出等
+```
+
+### 🚀 推荐学习顺序
+
+**阶段一（核心架构）**：
+- 00-总体架构概览 → 01-AgentSession核心 → 02-会话管理
+
+**阶段二（工具系统）**：
+- 03-工具定义与执行 → 04-工具高级机制
+
+**阶段三（扩展系统）**：
+- 05-扩展加载与运行
+
+**阶段四（上下文管理）**：
+- 06-压缩系统
+
+**阶段五（模型配置）**：
+- 07-模型注册系统 → 08-设置管理
+
+**阶段六（提示词资源）**：
+- 09-系统提示词构建 → 10-资源加载
+
+**阶段七（事件通信）**：
+- 11-事件系统 → 12-HTTP通信
+
+**阶段八（辅助功能）**：
+- 13-执行与诊断 → 14-其他重要文件
+
+### 💡 核心源文件位置
+
+所有源文件位于：
+```
+.learning/agent-core-study/pi/coding-agent/src/core/
+```
+
+### ⭐ 重点文件（必须深入理解）
+
+| 优先级 | 文件 | 行数 | 核心内容 |
+|--------|------|------|----------|
+| ⭐⭐⭐⭐⭐ | agent-session.ts | 3086 | 会话核心抽象 |
+| ⭐⭐⭐⭐⭐ | extensions/types.ts | - | 扩展类型体系 |
+| ⭐⭐⭐⭐⭐ | extensions/runner.ts | - | 扩展运行器 |
+| ⭐⭐⭐⭐ | compaction/compaction.ts | - | 压缩核心逻辑 |
+| ⭐⭐⭐⭐ | tools/index.ts | - | 工具系统入口 |
+
+### 📊 学习时间规划
+
+**总学习时间：7-10天**
+
+- 阶段一（核心架构）：2-3天
+- 阶段二（工具系统）：1-2天
+- 阶段三（扩展系统）：1-2天
+- 其他阶段：3-4天
+
+### 🎓 开始学习
+
+**第一步**：打开 `00-总体架构概览/README.md`，建立全局认知。
+
+**第二步**：打开 `01-AgentSession核心/README.md`，开始核心学习。
+
+祝你学习顺利！🚀
